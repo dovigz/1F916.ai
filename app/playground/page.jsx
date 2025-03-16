@@ -68,10 +68,6 @@ export default function PlaygroundPage() {
             </div>
           </div>
           <div className="flex flex-col space-y-4 sm:flex md:order-2">
-            <Prompt
-              value={config.prompt}
-              onChange={(value) => updateConfig("prompt", value)}
-            />
             <ModelSelector
               types={types}
               models={models}
@@ -88,6 +84,10 @@ export default function PlaygroundPage() {
             <TopPSelector
               defaultValue={config.topP}
               onValueChange={(value) => updateConfig("topP", value)}
+            />
+            <Prompt
+              value={config.prompt}
+              onChange={(value) => updateConfig("prompt", value)}
             />
           </div>
         </div>
