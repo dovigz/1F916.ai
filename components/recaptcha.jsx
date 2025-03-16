@@ -27,7 +27,7 @@ export function Recaptcha({ theme = "dark" }) {
   const checkboxRef = useRef(null);
 
   useEffect(() => {
-    const apiKey = sessionStorage.getItem("openai_api_key");
+    const apiKey = sessionStorage.getItem("OPENAI_API_KEY");
 
     if (apiKey) {
       setApiKeyExists(true);
@@ -84,7 +84,7 @@ export function Recaptcha({ theme = "dark" }) {
 
   // Check if API key exists in sessionStorage
   const checkApiKey = () => {
-    const apiKey = sessionStorage.getItem("openai_api_key");
+    const apiKey = sessionStorage.getItem("OPENAI_API_KEY");
     setLoading(true);
 
     setTimeout(() => {

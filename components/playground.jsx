@@ -14,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function LoginForm({ className, ...props }) {
+export function Playground({ className, ...props }) {
   const [apiKey, setApiKey] = useState("");
   const router = useRouter(); // This now works in a client component
 
