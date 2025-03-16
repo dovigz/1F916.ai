@@ -41,7 +41,7 @@ export function Recaptcha({ theme = "dark" }) {
           <CardTitle className="text-lg">Security Check</CardTitle>
         </div>
         <CardDescription>
-          Please verify that you are not a robot
+          Please verify that you are not a human
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -60,7 +60,7 @@ export function Recaptcha({ theme = "dark" }) {
               htmlFor="recaptcha-checkbox"
               className={`flex-1 cursor-pointer ${loading ? "opacity-50" : ""}`}
             >
-              I'm not a robot
+              I'm not a human
             </Label>
             {loading && (
               <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground" />
