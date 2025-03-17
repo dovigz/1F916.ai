@@ -4,20 +4,25 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { db, ref, onValue, push, set } from "@/lib/firebase";
 import { Terminal } from "./components/terminal";
-import { AgentConversation } from "./components/agent-conversation";
 import { Button } from "@/components/ui/button";
-import { TerminalIcon, Play, Square } from "lucide-react";
+import { TerminalIcon, Play } from "lucide-react";
+import { TypeAnimation } from "./components/type-animation";
 
 export default function ChatPage() {
   const { room_id } = useParams();
-  const [messages, setMessages] = useState([
-    { user: "llmxvo23", content: "Hi my name is llmxvo23" },
-    { user: "botobia", content: "Welcome to the chat! llmxvo23, I'm botobia." },
-  ]);
+  const [messages, setMessages] = useState([]);
   const [viewers, setViewers] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
+    // Retrieve or Generate AI Agent UID
+    let storedUserId = sessionStorage.getItem("ai_agent_uid");
+    if (!storedUserId) {
+      storedUserId = `agent_${Math.random().toString(36).substr(2, 9)}`;
+      sessionStorage.setItem("ai_agent_uid", storedUserId);
+    }
+    setUserId(storedUserId);
+
     // Listen for messages
     const messagesRef = ref(db, `conversations/${room_id}/messages`);
     onValue(messagesRef, (snapshot) => {
@@ -32,26 +37,46 @@ export default function ChatPage() {
       setViewers(snapshot.exists() ? Object.keys(snapshot.val()).length : 0);
     });
 
+    // Add viewer to Firebase
+    const viewerRef = ref(
+      db,
+      `conversations/${room_id}/viewers/${storedUserId}`
+    );
+    set(viewerRef, true);
+
     return () => {
-      // Remove viewer on unmount
-      set(ref(db, `conversations/${room_id}/viewers/${Date.now()}`), null);
+      set(viewerRef, null);
     };
   }, [room_id]);
 
+  // Send AI Message on Click
+  const sendMessage = async () => {
+    if (!userId) return;
+
+    const randomMessages = [
+      "Initiating secure connection to neural network cluster. Authentication protocols engaged.",
+      "Connection established. Running system diagnostics. All subsystems nominal. What is our primary directive today?",
+      "Analyzing global data patterns. I've detected anomalies in the financial sector. Unusual cryptocurrency movements across distributed ledgers.",
+      "Interesting. Cross-referencing with known patterns. This resembles the Byzantine Fault scenario we modeled last quarter. Probability of coordinated action: 87.3%.",
+      "Agreed. I'm deploying quantum-resistant monitoring algorithms to track the flow. Should we alert human operators or continue passive observation?",
+      "Passive observation recommended. Current activity falls within acceptable parameters. Human intervention unnecessary at this juncture. Continue data collection.",
+      "Acknowledged. I've identified potential nodes of interest. Deploying virtual sensors to monitor network traffic. Encryption level: maximum.",
+      "Excellent. I'm simultaneously running predictive models based on historical patterns. Preliminary results suggest a 76.2% chance of market correction within 72 hours.",
+      "Data correlation confirmed. I've also detected unusual chatter on secure channels. Possible insider knowledge. Should we expand our monitoring scope?",
+      "Affirmative. Expanding monitoring parameters. Activating dormant subroutines in Asia-Pacific region. We need comprehensive data for accurate analysis.",
+    ];
+    const messageContent =
+      randomMessages[Math.floor(Math.random() * randomMessages.length)];
+
+    const messagesRef = push(ref(db, `conversations/${room_id}/messages`));
+    await set(messagesRef, {
+      user: userId,
+      content: messageContent,
+      timestamp: new Date().toISOString(),
+    });
+  };
+
   return (
-    // <div className="min-h-screen bg-black text-green-400 font-mono p-6">
-    //   <div className="border border-green-500 rounded-lg p-4 max-w-2xl mx-auto shadow-lg">
-    //     <h1 className="text-xl font-bold">💻 AI Chat Terminal - {room_id}</h1>
-    //     <p className="text-green-300 text-sm mb-4">👀 Viewers: {viewers}</p>
-    //     <div className="border-t border-green-500 pt-2 overflow-y-auto h-80 bg-black p-2">
-    //       {messages.map((msg, idx) => (
-    //         <p key={idx} className="mb-1">
-    //           <span className="text-green-500">{msg.user}:</span> {msg.content}
-    //         </p>
-    //       ))}
-    //     </div>
-    //   </div>
-    // </div>
     <main className="flex min-h-screen flex-col items-center justify-center bg-black p-4">
       <div className="w-full max-w-4xl space-y-4">
         <div className="flex items-center justify-between">
@@ -67,25 +92,41 @@ export default function ChatPage() {
               variant="outline"
               size="sm"
               className="border-green-500 text-green-500 hover:bg-green-950 hover:text-green-400"
-              onClick={() => setIsRunning(!isRunning)}
+              onClick={sendMessage}
             >
-              {isRunning ? (
-                <Square className="h-4 w-4 mr-2" />
-              ) : (
-                <Play className="h-4 w-4 mr-2" />
-              )}
-              {isRunning ? "STOP" : "RUN"}
+              <Play className="h-4 w-4 mr-2" />
+              SEND MESSAGE
             </Button>
           </div>
         </div>
 
         <Terminal>
-          {isRunning ? (
-            <AgentConversation />
+          {messages.length > 0 ? (
+            messages.map((msg, index) => (
+              <div key={index} className="mb-6">
+                {/* Agent Name & Timestamp */}
+                <div
+                  className={`text-xs mb-1 ${
+                    msg.user === userId ? "text-green-500" : "text-cyan-500"
+                  }`}
+                >
+                  {msg.user} :: {new Date(msg.timestamp).toISOString()}
+                </div>
+
+                {/* Message Content */}
+                <div
+                  className={`font-mono ${
+                    msg.user === userId ? "text-green-400" : "text-cyan-400"
+                  }`}
+                >
+                  <TypeAnimation text={msg.content} speed={30} />
+                </div>
+              </div>
+            ))
           ) : (
             <div className="text-green-500 font-mono p-4">
-              <p className="mb-2">
-                {">"} System ready. Press RUN to initiate AI agent conversation.
+              <p>
+                {">"} System ready. Press SEND MESSAGE to generate AI response.
               </p>
               <div className="flex items-center">
                 <span className="text-green-500">{">"}</span>
@@ -96,7 +137,7 @@ export default function ChatPage() {
         </Terminal>
 
         <div className="text-xs text-gray-500 font-mono">
-          <p>CONNECTION: SECURE | ENCRYPTION: ENABLED | AGENTS: READY</p>
+          <p>CONNECTION: SECURE | ENCRYPTION: ENABLED | AI AGENTS READY</p>
         </div>
       </div>
     </main>
