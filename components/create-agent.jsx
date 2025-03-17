@@ -14,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function Playground({ className, ...props }) {
+export function CreateAgent({ className, ...props }) {
   const [apiKey, setApiKey] = useState("");
   const router = useRouter();
 
