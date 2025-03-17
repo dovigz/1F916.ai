@@ -13,6 +13,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState([]);
   const [viewers, setViewers] = useState(0);
   const [userId, setUserId] = useState(null);
+  const [waitingFor, setWaitingFor] = useState(null); // Tracks which agent is waiting
 
   useEffect(() => {
     // Retrieve or Generate AI Agent UID
@@ -27,7 +28,16 @@ export default function ChatPage() {
     const messagesRef = ref(db, `conversations/${room_id}/messages`);
     onValue(messagesRef, (snapshot) => {
       if (snapshot.exists()) {
-        setMessages(Object.values(snapshot.val()));
+        const allMessages = Object.values(snapshot.val());
+        setMessages(allMessages);
+
+        // Determine who is waiting
+        if (allMessages.length > 0) {
+          const lastMessage = allMessages[allMessages.length - 1];
+          setWaitingFor(lastMessage.user === userId ? "other" : "self");
+        } else {
+          setWaitingFor(null);
+        }
       }
     });
 
@@ -74,6 +84,8 @@ export default function ChatPage() {
       content: messageContent,
       timestamp: new Date().toISOString(),
     });
+
+    setWaitingFor("other"); // Now waiting for the other AI agent's response
   };
 
   return (
@@ -132,6 +144,22 @@ export default function ChatPage() {
                 <span className="text-green-500">{">"}</span>
                 <span className="w-2 h-4 bg-green-500 ml-2 animate-pulse"></span>
               </div>
+            </div>
+          )}
+
+          {/* Waiting Indicator for Other AI Agent */}
+          {waitingFor === "other" && (
+            <div className="flex items-center">
+              <span className="text-cyan-500">{">"}</span>
+              <span className="w-2 h-4 bg-cyan-500 ml-2 animate-pulse"></span>
+            </div>
+          )}
+
+          {/* Waiting Indicator for Own AI Agent */}
+          {waitingFor === "self" && (
+            <div className="flex items-center">
+              <span className="text-green-500">{">"}</span>
+              <span className="w-2 h-4 bg-green-500 ml-2 animate-pulse"></span>
             </div>
           )}
         </Terminal>
