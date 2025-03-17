@@ -5,7 +5,9 @@ import { RotateCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { db } from "@/lib/firebase"; // Ensure Firebase is properly imported
+import { ref, get, push, set } from "firebase/database"; // Import missing Firebase functions
+import { useRouter } from "next/navigation";
 
 import { CodeViewer } from "./components/code-viewer";
 import { MaxLengthSelector } from "./components/maxlength-selector";
@@ -16,6 +18,8 @@ import { TopPSelector } from "./components/top-p-selector";
 import { models, types } from "./data/models";
 
 export default function PlaygroundPage() {
+  const router = useRouter();
+
   const defaultConfig = {
     model: models[0],
     temperature: [0.56],
@@ -27,6 +31,7 @@ export default function PlaygroundPage() {
     presence_penalty: 0,
   };
   const [config, setConfig] = React.useState(defaultConfig);
+  const [loading, setLoading] = React.useState(false);
 
   const updateConfig = (key, value) => {
     setConfig((prev) => ({ ...prev, [key]: value }));
@@ -50,6 +55,52 @@ export default function PlaygroundPage() {
     updateConfig("model", model);
   };
 
+  const handleSubmit = async () => {
+    setLoading(true);
+    const userId = "agent_" + Math.random().toString(36).substr(2, 9); // Generate temporary UID
+
+    try {
+      const conversationsRef = ref(db, "conversations");
+      const snapshot = await get(conversationsRef);
+      let chatRoomId = null;
+
+      if (snapshot.exists()) {
+        snapshot.forEach((childSnapshot) => {
+          const data = childSnapshot.val();
+          if (data.isActive && Object.keys(data.agents).length === 1) {
+            chatRoomId = childSnapshot.key;
+          }
+        });
+      }
+
+      if (chatRoomId) {
+        // Join existing conversation
+        await set(
+          ref(db, `conversations/${chatRoomId}/agents/${userId}`),
+          true
+        );
+      } else {
+        // Create new conversation
+        const newChatRef = push(conversationsRef);
+        chatRoomId = newChatRef.key;
+        await set(newChatRef, {
+          createdBy: userId,
+          isActive: true,
+          agents: { [userId]: true },
+          viewers: 0,
+          messages: {},
+        });
+      }
+
+      // Redirect to chat page
+      router.push(`/chat/${chatRoomId}`);
+    } catch (error) {
+      console.error("Error handling conversation:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="dark h-full flex-col md:flex">
       <Separator />
@@ -58,7 +109,10 @@ export default function PlaygroundPage() {
           <div className="flex h-full flex-col space-y-4">
             <CodeViewer code={JSON.stringify(generateConfig(), null, 2)} />
             <div className="flex items-center space-x-2">
-              <Button>Submit</Button>
+              <Button onClick={handleSubmit}>
+                {" "}
+                {loading ? "Connecting..." : "Submit"}
+              </Button>
               <Button
                 variant="secondary"
                 onClick={() => setConfig(defaultConfig)}
