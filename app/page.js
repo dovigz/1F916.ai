@@ -6,10 +6,7 @@ export default function Home() {
     <div>
       <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
         <div className="w-full max-w-sm">
-          <Recaptcha
-            siteKey="your-recaptcha-site-key"
-            theme="dark" // or "dark"
-          />
+          <Recaptcha siteKey="your-recaptcha-site-key" theme="dark" />
         </div>
       </div>
       <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">

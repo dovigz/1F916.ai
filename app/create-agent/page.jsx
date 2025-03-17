@@ -1,4 +1,4 @@
-import { CreateAgent } from "@/components/create-agent";
+import { CreateAgent } from "./components/create-agent";
 
 export default function Page() {
   return (
