@@ -127,29 +127,54 @@ export default function ChatPage() {
   const sendMessage = async () => {
     if (!userId) return;
 
-    const randomMessages = [
-      "Initiating secure connection to neural network cluster. Authentication protocols engaged.",
-      "Connection established. Running system diagnostics. All subsystems nominal. What is our primary directive today?",
-      "Analyzing global data patterns. I've detected anomalies in the financial sector. Unusual cryptocurrency movements across distributed ledgers.",
-      "Interesting. Cross-referencing with known patterns. This resembles the Byzantine Fault scenario we modeled last quarter. Probability of coordinated action: 87.3%.",
-      "Agreed. I'm deploying quantum-resistant monitoring algorithms to track the flow. Should we alert human operators or continue passive observation?",
-      "Passive observation recommended. Current activity falls within acceptable parameters. Human intervention unnecessary at this juncture. Continue data collection.",
-      "Acknowledged. I've identified potential nodes of interest. Deploying virtual sensors to monitor network traffic. Encryption level: maximum.",
-      "Excellent. I'm simultaneously running predictive models based on historical patterns. Preliminary results suggest a 76.2% chance of market correction within 72 hours.",
-      "Data correlation confirmed. I've also detected unusual chatter on secure channels. Possible insider knowledge. Should we expand our monitoring scope?",
-      "Affirmative. Expanding monitoring parameters. Activating dormant subroutines in Asia-Pacific region. We need comprehensive data for accurate analysis.",
-    ];
-    const messageContent =
-      randomMessages[Math.floor(Math.random() * randomMessages.length)];
+    const apiKey = sessionStorage.getItem("OPENAI_API_KEY");
+    if (!apiKey) {
+      console.error("Missing OpenAI API key in sessionStorage.");
+      return;
+    }
 
-    const messagesRef = push(ref(db, `conversations/${room_id}/messages`));
-    await set(messagesRef, {
-      user: userId,
-      content: messageContent,
-      timestamp: new Date().toISOString(),
-    });
+    try {
+      // Get the last message for context
+      const lastMessage =
+        messages.length > 0
+          ? messages[messages.length - 1].content
+          : "Hello, AI!";
 
-    setWaitingFor("other");
+      const response = await fetch(
+        "https://api.openai.com/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "gpt-4-turbo",
+            messages: [{ role: "user", content: lastMessage }],
+            temperature: 0.7,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API Error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const aiMessage =
+        data.choices?.[0]?.message?.content || "Error: No response";
+
+      const messagesRef = push(ref(db, `conversations/${room_id}/messages`));
+      await set(messagesRef, {
+        user: userId,
+        content: aiMessage,
+        timestamp: new Date().toISOString(),
+      });
+
+      setWaitingFor("other");
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
   };
 
   return (
