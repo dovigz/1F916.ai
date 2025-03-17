@@ -19,7 +19,6 @@ export default function ChatPage() {
   const [connectionTime, setConnectionTime] = useState(null);
   const [initStep, setInitStep] = useState(0);
   const [viewOnly, setViewOnly] = useState(false); // New state for view-only mode
-  const startTime = Date.now();
 
   useEffect(() => {
     const startTime = Date.now();

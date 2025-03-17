@@ -1,7 +1,7 @@
-"use client"; // Ensure this runs as a client-side component
+"use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation"; // Correct router import for App Router
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 
 export function Playground({ className, ...props }) {
   const [apiKey, setApiKey] = useState("");
-  const router = useRouter(); // This now works in a client component
+  const router = useRouter();
 
   const handleSubmit = (e) => {
     e.preventDefault();

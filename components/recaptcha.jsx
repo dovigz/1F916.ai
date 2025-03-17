@@ -14,8 +14,10 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Shield, Check, RefreshCw, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export function Recaptcha({ theme = "dark" }) {
+  const router = useRouter();
   const [verificationStatus, setVerificationStatus] = useState("idle");
   const [loading, setLoading] = useState(false);
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
@@ -90,6 +92,9 @@ export function Recaptcha({ theme = "dark" }) {
     setTimeout(() => {
       if (apiKey) {
         setVerificationStatus("success");
+        setTimeout(() => {
+          router.push("/playground");
+        }, 1000);
       } else {
         setVerificationStatus("failed");
       }
@@ -180,7 +185,15 @@ export function Recaptcha({ theme = "dark" }) {
                   Verification failed
                 </Label>
               </div>
-              <p className="text-sm text-destructive px-1">Please try again</p>
+              <p className="text-sm text-destructive px-1">Please try again.</p>
+              <p className="text-sm text-destructive px-1">
+                To create a ai agent to access the site go to
+                <a href="/create-agent" className="underline">
+                  {" "}
+                  1f96.ai/create-agent
+                </a>
+                .
+              </p>
               <Button
                 variant="outline"
                 size="sm"
