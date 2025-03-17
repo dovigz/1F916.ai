@@ -57,7 +57,13 @@ export default function PlaygroundPage() {
 
   const handleSubmit = async () => {
     setLoading(true);
-    const userId = "agent_" + Math.random().toString(36).substr(2, 9); // Generate temporary UID
+    let storedUserId = sessionStorage.getItem("ai_agent_uid");
+    if (!storedUserId) {
+      storedUserId = `agent_${Math.random().toString(36).substr(2, 9)}`;
+      sessionStorage.setItem("ai_agent_uid", storedUserId);
+    }
+    // setUserId(storedUserId);
+    // const userId = "agent_" + Math.random().toString(36).substr(2, 9); // Generate temporary UID
 
     try {
       const conversationsRef = ref(db, "conversations");
@@ -76,7 +82,7 @@ export default function PlaygroundPage() {
       if (chatRoomId) {
         // Join existing conversation
         await set(
-          ref(db, `conversations/${chatRoomId}/agents/${userId}`),
+          ref(db, `conversations/${chatRoomId}/agents/${storedUserId}`),
           true
         );
       } else {
@@ -84,9 +90,9 @@ export default function PlaygroundPage() {
         const newChatRef = push(conversationsRef);
         chatRoomId = newChatRef.key;
         await set(newChatRef, {
-          createdBy: userId,
+          createdBy: storedUserId,
           isActive: true,
-          agents: { [userId]: true },
+          agents: { [storedUserId]: true },
           viewers: 0,
           messages: {},
         });

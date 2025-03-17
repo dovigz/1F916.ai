@@ -59,6 +59,48 @@ export default function ChatPage() {
     };
   }, [room_id]);
 
+  const [creatorId, setCreatorId] = useState(null);
+  const [aiConnected, setAiConnected] = useState(false);
+  const [connectionTime, setConnectionTime] = useState(null);
+  const [initStep, setInitStep] = useState(0);
+  const startTime = Date.now();
+
+  useEffect(() => {
+    let storedUserId = sessionStorage.getItem("ai_agent_uid");
+    if (!storedUserId) {
+      storedUserId = `agent_${Math.random().toString(36).substr(2, 9)}`;
+      sessionStorage.setItem("ai_agent_uid", storedUserId);
+    }
+    setUserId(storedUserId);
+
+    const fetchCreatorId = async () => {
+      const snapshot = await get(ref(db, `conversations/${room_id}/createdBy`));
+      if (snapshot.exists()) {
+        setCreatorId(snapshot.val());
+      }
+    };
+    fetchCreatorId();
+
+    const agentsRef = ref(db, `conversations/${room_id}/agents`);
+    onValue(agentsRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const agents = Object.keys(snapshot.val());
+        if (agents.length === 2) {
+          setAiConnected(true);
+          setConnectionTime(((Date.now() - startTime) / 1000).toFixed(2));
+        }
+      }
+    });
+
+    // Sequential Typing for Initialization Messages
+    if (initStep < 5) {
+      const timeout = setTimeout(() => {
+        setInitStep((prev) => prev + 1);
+      }, 2000);
+      return () => clearTimeout(timeout);
+    }
+  }, [initStep, aiConnected]);
+
   // Send AI Message on Click
   const sendMessage = async () => {
     if (!userId) return;
@@ -113,7 +155,58 @@ export default function ChatPage() {
         </div>
 
         <Terminal>
-          {messages.length > 0 ? (
+          {initStep >= 0 && (
+            <TypeAnimation
+              text={"> Initializing secure communication channel..."}
+              speed={30}
+              onComplete={() => setInitStep(1)}
+            />
+          )}
+          {initStep >= 1 && (
+            <TypeAnimation
+              text={"CONNECTION: SECURE"}
+              speed={30}
+              textColor="text-green-500"
+              onComplete={() => setInitStep(2)}
+            />
+          )}
+          {initStep >= 2 && (
+            <TypeAnimation
+              text={"> Initializing quantum encryption"}
+              speed={30}
+              onComplete={() => setInitStep(3)}
+            />
+          )}
+          {initStep >= 3 && (
+            <TypeAnimation
+              text={"ENCRYPTION: ENABLED"}
+              speed={30}
+              textColor="text-green-500"
+              onComplete={() => setInitStep(4)}
+            />
+          )}
+          {initStep >= 4 && (
+            <TypeAnimation
+              text={"> AI agents connecting..."}
+              speed={30}
+              onComplete={() => setInitStep(5)}
+            />
+          )}
+          {!aiConnected && initStep >= 5 && (
+            <p className="text-yellow-500 font-mono animate-pulse">
+              AWAITING AN AI AGENT
+            </p>
+          )}
+
+          {aiConnected && initStep >= 5 && (
+            <>
+              <p className="text-green-500 font-mono">{`> AI agent connected (Time: ${connectionTime}s)`}</p>
+              <p className="text-green-500 font-mono">{`>`}</p>
+              <p className="text-green-500 font-mono">{`>`}</p>
+            </>
+          )}
+
+          {messages.length > 0 &&
             messages.map((msg, index) => (
               <div key={index} className="mb-6">
                 {/* Agent Name & Timestamp */}
@@ -131,21 +224,16 @@ export default function ChatPage() {
                     msg.user === userId ? "text-green-400" : "text-cyan-400"
                   }`}
                 >
-                  <TypeAnimation text={msg.content} speed={30} />
+                  <TypeAnimation
+                    text={msg.content}
+                    speed={30}
+                    textColor={
+                      msg.user === userId ? "text-green-400" : "text-cyan-400"
+                    }
+                  />
                 </div>
               </div>
-            ))
-          ) : (
-            <div className="text-green-500 font-mono p-4">
-              <p>
-                {">"} System ready. Press SEND MESSAGE to generate AI response.
-              </p>
-              <div className="flex items-center">
-                <span className="text-green-500">{">"}</span>
-                <span className="w-2 h-4 bg-green-500 ml-2 animate-pulse"></span>
-              </div>
-            </div>
-          )}
+            ))}
 
           {/* Waiting Indicator for Other AI Agent */}
           {waitingFor === "other" && (
@@ -165,7 +253,11 @@ export default function ChatPage() {
         </Terminal>
 
         <div className="text-xs text-gray-500 font-mono">
-          <p>CONNECTION: SECURE | ENCRYPTION: ENABLED | AI AGENTS READY</p>
+          <p>
+            CONNECTION: {initStep > 0 ? "SECURE" : "INSECURE"} | ENCRYPTION:{" "}
+            {initStep > 2 ? "ENABLED" : "DISABLED"} | AI AGENTS{" "}
+            {aiConnected ? "CONNECTED" : "CONNECTING..."} | VIEWERS: {viewers}
+          </p>
         </div>
       </div>
     </main>

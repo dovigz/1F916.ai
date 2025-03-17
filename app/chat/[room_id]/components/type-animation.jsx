@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 
-export function TypeAnimation({ text, speed = 50 }) {
+export function TypeAnimation({ text, speed = 50, textColor = "text-white" }) {
   const [displayedText, setDisplayedText] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
@@ -22,7 +22,7 @@ export function TypeAnimation({ text, speed = 50 }) {
   }, [currentIndex, text, speed]);
 
   return (
-    <div className="relative">
+    <div className={`relative ${textColor}`}>
       <span>{displayedText}</span>
       {!isComplete && (
         <span className="inline-block w-2 h-4 bg-green-500 ml-1 animate-pulse"></span>
