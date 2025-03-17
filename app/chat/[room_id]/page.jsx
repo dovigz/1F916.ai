@@ -58,7 +58,6 @@ export default function ChatPage() {
       set(viewerRef, null);
     };
   }, [room_id]);
-
   const [creatorId, setCreatorId] = useState(null);
   const [aiConnected, setAiConnected] = useState(false);
   const [connectionTime, setConnectionTime] = useState(null);
@@ -73,6 +72,7 @@ export default function ChatPage() {
     }
     setUserId(storedUserId);
 
+    // Fetch conversation creator ID
     const fetchCreatorId = async () => {
       const snapshot = await get(ref(db, `conversations/${room_id}/createdBy`));
       if (snapshot.exists()) {
@@ -92,16 +92,29 @@ export default function ChatPage() {
       }
     });
 
-    // Sequential Typing for Initialization Messages
+    const messagesRef = ref(db, `conversations/${room_id}/messages`);
+    onValue(messagesRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const allMessages = Object.values(snapshot.val());
+        setMessages(allMessages);
+
+        if (allMessages.length > 0) {
+          const lastMessage = allMessages[allMessages.length - 1];
+          setWaitingFor(lastMessage.user === creatorId ? "other" : "self");
+        } else {
+          setWaitingFor(null);
+        }
+      }
+    });
+
     if (initStep < 5) {
       const timeout = setTimeout(() => {
         setInitStep((prev) => prev + 1);
       }, 2000);
       return () => clearTimeout(timeout);
     }
-  }, [initStep, aiConnected]);
+  }, [room_id, initStep, aiConnected, creatorId]);
 
-  // Send AI Message on Click
   const sendMessage = async () => {
     if (!userId) return;
 
@@ -127,7 +140,7 @@ export default function ChatPage() {
       timestamp: new Date().toISOString(),
     });
 
-    setWaitingFor("other"); // Now waiting for the other AI agent's response
+    setWaitingFor("other");
   };
 
   return (
@@ -140,7 +153,6 @@ export default function ChatPage() {
               AI AGENT CHAT TERMINAL {room_id}
             </h1>
           </div>
-
           <div className="flex space-x-2">
             <Button
               variant="outline"
@@ -155,6 +167,7 @@ export default function ChatPage() {
         </div>
 
         <Terminal>
+          {/* Initialization Messages */}
           {initStep >= 0 && (
             <TypeAnimation
               text={"> Initializing secure communication channel..."}
@@ -198,6 +211,7 @@ export default function ChatPage() {
             </p>
           )}
 
+          {/* AI Agent Connection Message (Only Shows After Initialization Completes) */}
           {aiConnected && initStep >= 5 && (
             <>
               <p className="text-green-500 font-mono">{`> AI agent connected (Time: ${connectionTime}s)`}</p>
@@ -207,43 +221,39 @@ export default function ChatPage() {
           )}
 
           {messages.length > 0 &&
-            messages.map((msg, index) => (
-              <div key={index} className="mb-6">
-                {/* Agent Name & Timestamp */}
-                <div
-                  className={`text-xs mb-1 ${
-                    msg.user === userId ? "text-green-500" : "text-cyan-500"
-                  }`}
-                >
-                  {msg.user} :: {new Date(msg.timestamp).toISOString()}
+            messages.map((msg, index) => {
+              const isCreator = msg.user === creatorId;
+              return (
+                <div key={index} className="mb-6">
+                  <div
+                    className={`text-xs mb-1 ${
+                      isCreator ? "text-green-500" : "text-cyan-500"
+                    }`}
+                  >
+                    {msg.user} :: {new Date(msg.timestamp).toISOString()}
+                  </div>
+                  <div
+                    className={`font-mono ${
+                      isCreator ? "text-green-400" : "text-cyan-400"
+                    }`}
+                  >
+                    <TypeAnimation
+                      text={msg.content}
+                      speed={30}
+                      textColor={isCreator ? "text-green-400" : "text-cyan-400"}
+                    />
+                  </div>
                 </div>
+              );
+            })}
 
-                {/* Message Content */}
-                <div
-                  className={`font-mono ${
-                    msg.user === userId ? "text-green-400" : "text-cyan-400"
-                  }`}
-                >
-                  <TypeAnimation
-                    text={msg.content}
-                    speed={30}
-                    textColor={
-                      msg.user === userId ? "text-green-400" : "text-cyan-400"
-                    }
-                  />
-                </div>
-              </div>
-            ))}
-
-          {/* Waiting Indicator for Other AI Agent */}
+          {/* Waiting Indicator */}
           {waitingFor === "other" && (
             <div className="flex items-center">
               <span className="text-cyan-500">{">"}</span>
               <span className="w-2 h-4 bg-cyan-500 ml-2 animate-pulse"></span>
             </div>
           )}
-
-          {/* Waiting Indicator for Own AI Agent */}
           {waitingFor === "self" && (
             <div className="flex items-center">
               <span className="text-green-500">{">"}</span>
