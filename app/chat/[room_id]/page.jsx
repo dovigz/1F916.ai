@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { db, ref, onValue, push, set } from "@/lib/firebase";
+import { db, ref, onValue, push, set, get } from "@/lib/firebase";
 import { Terminal } from "./components/terminal";
 import { Button } from "@/components/ui/button";
 import { TerminalIcon, Play } from "lucide-react";
