@@ -13,127 +13,119 @@ export default function ChatPage() {
   const [messages, setMessages] = useState([]);
   const [viewers, setViewers] = useState(0);
   const [userId, setUserId] = useState(null);
-  const [waitingFor, setWaitingFor] = useState(null); // Tracks which agent is waiting
-
-  //   useEffect(() => {
-  // Retrieve or Generate AI Agent UID
-  // let storedUserId = sessionStorage.getItem("ai_agent_uid");
-  // if (!storedUserId) {
-  // console.log("No stored user ID found.setWatching mode enabled.");
-  //   storedUserId = `agent_${Math.random().toString(36).substr(2, 9)}`;
-  //   sessionStorage.setItem("ai_agent_uid", storedUserId);
-  // }
-  // setUserId(storedUserId);
-
-  // Listen for messages
-  // const messagesRef = ref(db, `conversations/${room_id}/messages`);
-  // onValue(messagesRef, (snapshot) => {
-  //   if (snapshot.exists()) {
-  //     const allMessages = Object.values(snapshot.val());
-  //     setMessages(allMessages);
-
-  //     // Determine who is waiting
-  //     if (allMessages.length > 0) {
-  //       const lastMessage = allMessages[allMessages.length - 1];
-  //       setWaitingFor(lastMessage.user === userId ? "other" : "self");
-  //     } else {
-  //       setWaitingFor(null);
-  //     }
-  //   }
-  // });
-
-  // Track viewer count
-  // const viewersRef = ref(db, `conversations/${room_id}/viewers`);
-  // onValue(viewersRef, (snapshot) => {
-  //   setViewers(snapshot.exists() ? Object.keys(snapshot.val()).length : 0);
-  // });
-
-  // // Add viewer to Firebase
-  // const viewerRef = ref(
-  //   db,
-  //   `conversations/${room_id}/viewers/${storedUserId}`
-  // );
-  // set(viewerRef, true);
-
-  // return () => {
-  //   set(viewerRef, null);
-  // };
-  //   }, [room_id]);
+  const [waitingFor, setWaitingFor] = useState(null);
   const [creatorId, setCreatorId] = useState(null);
   const [aiConnected, setAiConnected] = useState(false);
   const [connectionTime, setConnectionTime] = useState(null);
   const [initStep, setInitStep] = useState(0);
+  const [viewOnly, setViewOnly] = useState(false); // New state for view-only mode
   const startTime = Date.now();
 
   useEffect(() => {
-    let storedUserId = sessionStorage.getItem("ai_agent_uid");
-    if (!storedUserId) {
-      console.log("No stored user ID found.setWatching mode enabled.");
+    const startTime = Date.now();
+    let isMounted = true;
 
-      //   storedUserId = `agent_${Math.random().toString(36).substr(2, 9)}`;
-      //   sessionStorage.setItem("ai_agent_uid", storedUserId);
-    }
-    setUserId(storedUserId);
+    const initializeChat = async () => {
+      // Get or create viewer ID first
+      let storedUserId = sessionStorage.getItem("ai_agent_uid");
+      const isExistingAgent = storedUserId && storedUserId.startsWith("agent_");
 
-    // Fetch conversation creator ID
-    const fetchCreatorId = async () => {
-      const snapshot = await get(ref(db, `conversations/${room_id}/createdBy`));
-      if (snapshot.exists()) {
-        setCreatorId(snapshot.val());
-      }
-    };
-    fetchCreatorId();
-
-    const agentsRef = ref(db, `conversations/${room_id}/agents`);
-    onValue(agentsRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const agents = Object.keys(snapshot.val());
-        if (agents.length === 2) {
-          setAiConnected(true);
-          setConnectionTime(((Date.now() - startTime) / 1000).toFixed(2));
+      if (!isExistingAgent) {
+        let viewerId = sessionStorage.getItem("viewer_agent_uid");
+        if (!viewerId) {
+          viewerId = `viewer_${Math.random().toString(36).substr(2, 9)}`;
+          sessionStorage.setItem("viewer_agent_uid", viewerId);
         }
+        storedUserId = viewerId;
+        setViewOnly(true);
       }
-    });
+      setUserId(storedUserId);
 
-    const messagesRef = ref(db, `conversations/${room_id}/messages`);
-    onValue(messagesRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const allMessages = Object.values(snapshot.val());
-        setMessages(allMessages);
+      // Firebase references
+      const creatorSnapshot = await get(
+        ref(db, `conversations/${room_id}/createdBy`)
+      );
+      if (creatorSnapshot.exists()) setCreatorId(creatorSnapshot.val());
 
-        if (allMessages.length > 0) {
-          const lastMessage = allMessages[allMessages.length - 1];
-          setWaitingFor(lastMessage.user === creatorId ? "other" : "self");
+      const agentsRef = ref(db, `conversations/${room_id}/agents`);
+      onValue(agentsRef, (snapshot) => {
+        if (snapshot.exists() && isMounted) {
+          const agents = Object.keys(snapshot.val());
+          const isOfficialAgent = agents.includes(storedUserId);
+
+          if (isOfficialAgent) {
+            setViewOnly(false);
+            sessionStorage.setItem("ai_agent_uid", storedUserId);
+          }
+
+          if (agents.length === 2) {
+            setAiConnected(true);
+            setConnectionTime(((Date.now() - startTime) / 1000).toFixed(2));
+          }
+        }
+      });
+
+      const messagesRef = ref(db, `conversations/${room_id}/messages`);
+      onValue(messagesRef, (snapshot) => {
+        if (snapshot.exists() && isMounted) {
+          const allMessages = Object.values(snapshot.val());
+          setMessages(allMessages);
+
+          if (allMessages.length > 0) {
+            const lastMessage = allMessages[allMessages.length - 1];
+            setWaitingFor(lastMessage.user === creatorId ? "other" : "self");
+          }
+        }
+      });
+
+      const viewersRef = ref(db, `conversations/${room_id}/viewers`);
+      onValue(viewersRef, (snapshot) => {
+        if (isMounted) {
+          setViewers(
+            snapshot.exists() ? Object.keys(snapshot.val()).length : 0
+          );
+        }
+      });
+
+      // Update presence
+      const presenceRef = ref(
+        db,
+        `conversations/${room_id}/viewers/${storedUserId}`
+      );
+      set(presenceRef, true);
+
+      // Initialize connection sequence
+      const initSteps = [
+        "> Initializing secure communication channel...",
+        "CONNECTION: SECURE",
+        "> Initializing quantum encryption",
+        "ENCRYPTION: ENABLED",
+        "> AI agents connecting...",
+      ];
+
+      let step = 0;
+      const interval = setInterval(() => {
+        if (step < initSteps.length && isMounted) {
+          setInitStep(step + 1);
+          step++;
         } else {
-          setWaitingFor(null);
+          clearInterval(interval);
         }
-      }
-    });
+      }, 2000);
 
-    const viewersRef = ref(db, `conversations/${room_id}/viewers`);
-    onValue(viewersRef, (snapshot) => {
-      setViewers(snapshot.exists() ? Object.keys(snapshot.val()).length : 0);
-    });
+      return () => {
+        isMounted = false;
+        set(presenceRef, null);
+        clearInterval(interval);
+      };
+    };
 
-    // Add viewer to Firebase
-    const viewerRef = ref(
-      db,
-      `conversations/${room_id}/viewers/${storedUserId}`
-    );
-    set(viewerRef, true);
+    initializeChat();
 
     return () => {
-      set(viewerRef, null);
+      isMounted = false;
     };
-
-    if (initStep < 5) {
-      const timeout = setTimeout(() => {
-        setInitStep((prev) => prev + 1);
-      }, 2000);
-      return () => clearTimeout(timeout);
-    }
-  }, [room_id, initStep, aiConnected, creatorId]);
-
+  }, [room_id]);
   const sendMessage = async () => {
     if (!userId) return;
 
@@ -172,17 +164,19 @@ export default function ChatPage() {
               AI AGENT CHAT TERMINAL {room_id}
             </h1>
           </div>
-          <div className="flex space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-green-500 text-green-500 hover:bg-green-950 hover:text-green-400"
-              onClick={sendMessage}
-            >
-              <Play className="h-4 w-4 mr-2" />
-              SEND MESSAGE
-            </Button>
-          </div>
+          {!viewOnly && (
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-green-500 text-green-500 hover:bg-green-950 hover:text-green-400"
+                onClick={sendMessage}
+              >
+                <Play className="h-4 w-4 mr-2" />
+                SEND MESSAGE
+              </Button>
+            </div>
+          )}
         </div>
 
         <Terminal>
