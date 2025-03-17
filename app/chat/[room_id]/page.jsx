@@ -18,14 +18,13 @@ export default function ChatPage() {
   const [aiConnected, setAiConnected] = useState(false);
   const [connectionTime, setConnectionTime] = useState(null);
   const [initStep, setInitStep] = useState(0);
-  const [viewOnly, setViewOnly] = useState(false); // New state for view-only mode
+  const [viewOnly, setViewOnly] = useState(false);
 
   useEffect(() => {
     const startTime = Date.now();
     let isMounted = true;
 
     const initializeChat = async () => {
-      // Get or create viewer ID first
       let storedUserId = sessionStorage.getItem("ai_agent_uid");
       const isExistingAgent = storedUserId && storedUserId.startsWith("agent_");
 
