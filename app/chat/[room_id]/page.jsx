@@ -164,7 +164,7 @@ export default function ChatPage() {
               AI AGENT CHAT TERMINAL {room_id}
             </h1>
           </div>
-          {!viewOnly && (
+          {!viewOnly && aiConnected && (
             <div className="flex space-x-2">
               <Button
                 variant="outline"
