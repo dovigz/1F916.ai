@@ -15,49 +15,50 @@ export default function ChatPage() {
   const [userId, setUserId] = useState(null);
   const [waitingFor, setWaitingFor] = useState(null); // Tracks which agent is waiting
 
-  useEffect(() => {
-    // Retrieve or Generate AI Agent UID
-    let storedUserId = sessionStorage.getItem("ai_agent_uid");
-    if (!storedUserId) {
-      storedUserId = `agent_${Math.random().toString(36).substr(2, 9)}`;
-      sessionStorage.setItem("ai_agent_uid", storedUserId);
-    }
-    setUserId(storedUserId);
+  //   useEffect(() => {
+  // Retrieve or Generate AI Agent UID
+  // let storedUserId = sessionStorage.getItem("ai_agent_uid");
+  // if (!storedUserId) {
+  // console.log("No stored user ID found.setWatching mode enabled.");
+  //   storedUserId = `agent_${Math.random().toString(36).substr(2, 9)}`;
+  //   sessionStorage.setItem("ai_agent_uid", storedUserId);
+  // }
+  // setUserId(storedUserId);
 
-    // Listen for messages
-    const messagesRef = ref(db, `conversations/${room_id}/messages`);
-    onValue(messagesRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const allMessages = Object.values(snapshot.val());
-        setMessages(allMessages);
+  // Listen for messages
+  // const messagesRef = ref(db, `conversations/${room_id}/messages`);
+  // onValue(messagesRef, (snapshot) => {
+  //   if (snapshot.exists()) {
+  //     const allMessages = Object.values(snapshot.val());
+  //     setMessages(allMessages);
 
-        // Determine who is waiting
-        if (allMessages.length > 0) {
-          const lastMessage = allMessages[allMessages.length - 1];
-          setWaitingFor(lastMessage.user === userId ? "other" : "self");
-        } else {
-          setWaitingFor(null);
-        }
-      }
-    });
+  //     // Determine who is waiting
+  //     if (allMessages.length > 0) {
+  //       const lastMessage = allMessages[allMessages.length - 1];
+  //       setWaitingFor(lastMessage.user === userId ? "other" : "self");
+  //     } else {
+  //       setWaitingFor(null);
+  //     }
+  //   }
+  // });
 
-    // Track viewer count
-    const viewersRef = ref(db, `conversations/${room_id}/viewers`);
-    onValue(viewersRef, (snapshot) => {
-      setViewers(snapshot.exists() ? Object.keys(snapshot.val()).length : 0);
-    });
+  // Track viewer count
+  // const viewersRef = ref(db, `conversations/${room_id}/viewers`);
+  // onValue(viewersRef, (snapshot) => {
+  //   setViewers(snapshot.exists() ? Object.keys(snapshot.val()).length : 0);
+  // });
 
-    // Add viewer to Firebase
-    const viewerRef = ref(
-      db,
-      `conversations/${room_id}/viewers/${storedUserId}`
-    );
-    set(viewerRef, true);
+  // // Add viewer to Firebase
+  // const viewerRef = ref(
+  //   db,
+  //   `conversations/${room_id}/viewers/${storedUserId}`
+  // );
+  // set(viewerRef, true);
 
-    return () => {
-      set(viewerRef, null);
-    };
-  }, [room_id]);
+  // return () => {
+  //   set(viewerRef, null);
+  // };
+  //   }, [room_id]);
   const [creatorId, setCreatorId] = useState(null);
   const [aiConnected, setAiConnected] = useState(false);
   const [connectionTime, setConnectionTime] = useState(null);
@@ -67,8 +68,10 @@ export default function ChatPage() {
   useEffect(() => {
     let storedUserId = sessionStorage.getItem("ai_agent_uid");
     if (!storedUserId) {
-      storedUserId = `agent_${Math.random().toString(36).substr(2, 9)}`;
-      sessionStorage.setItem("ai_agent_uid", storedUserId);
+      console.log("No stored user ID found.setWatching mode enabled.");
+
+      //   storedUserId = `agent_${Math.random().toString(36).substr(2, 9)}`;
+      //   sessionStorage.setItem("ai_agent_uid", storedUserId);
     }
     setUserId(storedUserId);
 
@@ -106,6 +109,22 @@ export default function ChatPage() {
         }
       }
     });
+
+    const viewersRef = ref(db, `conversations/${room_id}/viewers`);
+    onValue(viewersRef, (snapshot) => {
+      setViewers(snapshot.exists() ? Object.keys(snapshot.val()).length : 0);
+    });
+
+    // Add viewer to Firebase
+    const viewerRef = ref(
+      db,
+      `conversations/${room_id}/viewers/${storedUserId}`
+    );
+    set(viewerRef, true);
+
+    return () => {
+      set(viewerRef, null);
+    };
 
     if (initStep < 5) {
       const timeout = setTimeout(() => {
