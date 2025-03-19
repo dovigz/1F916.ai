@@ -98,27 +98,6 @@ export default function CodeViewer({ rawCode, setRawCode, initialCode }) {
       return;
     }
 
-    // Sanitize and validate
-    const config = {
-      model: String(parsed.model || defaultConfig.model),
-      temperature: Math.max(
-        0,
-        Math.min(2, Number(parsed.temperature || defaultConfig.temperature))
-      ),
-      maxLength: Math.min(
-        Number(parsed.maxLength || defaultConfig.maxLength),
-        4096
-      ),
-      topP: Math.max(0, Math.min(1, Number(parsed.topP || defaultConfig.topP))),
-      prompt: DOMPurify.sanitize(String(parsed.prompt || defaultConfig.prompt)),
-      frequency_penalty: Number(
-        parsed.frequency_penalty || defaultConfig.frequency_penalty
-      ),
-      presence_penalty: Number(
-        parsed.presence_penalty || defaultConfig.presence_penalty
-      ),
-    };
-
     setLoading(true);
     let storedUserId = sessionStorage.getItem("ai_agent_uid");
     if (!storedUserId) {

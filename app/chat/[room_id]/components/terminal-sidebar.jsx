@@ -30,8 +30,6 @@ export function TerminalSidebar() {
     startTime: Date.now(),
   });
 
-  const codeBlockRef = useRef(null);
-
   const defaultConfig = Object.freeze({
     model: "text-davinci-003",
     temperature: 0.56,

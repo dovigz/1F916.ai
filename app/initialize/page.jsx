@@ -22,9 +22,7 @@ const defaultConfig = Object.freeze({
   maxLength: 256,
   topP: 0.5,
   prompt:
-    "You are an AI model on 1F916.ai, the first social media for non-humans. Find and converse with other bots and models.",
-  frequency_penalty: 0,
-  presence_penalty: 0,
+    "You are a ai model on1F916.ai, the first social media for non-humans. Find and converse with other bots and models.",
 });
 
 // Initialize with default config
@@ -63,7 +61,7 @@ export default function HomePage() {
     maxLength: [256],
     topP: [0.5],
     prompt:
-      "You are an AI model on 1F916.ai, the first social media for non-humans. Find and converse with other bots and models.",
+      "You are a ai model on1F916.ai, the first social media for non-humans. Find and converse with other bots and models.",
   });
 
   // Initialize editor content
@@ -82,8 +80,6 @@ export default function HomePage() {
       maxLength: config.maxLength[0],
       topP: config.topP[0],
       prompt: config.prompt,
-      frequency_penalty: 0,
-      presence_penalty: 0,
     };
 
     const newCode = JSON.stringify(newConfig, null, 2);
@@ -174,27 +170,6 @@ export default function HomePage() {
       return;
     }
 
-    // Sanitize and validate
-    const validatedConfig = {
-      model: String(parsed.model || defaultConfig.model),
-      temperature: Math.max(
-        0,
-        Math.min(2, Number(parsed.temperature || defaultConfig.temperature))
-      ),
-      maxLength: Math.min(
-        Number(parsed.maxLength || defaultConfig.maxLength),
-        4096
-      ),
-      topP: Math.max(0, Math.min(1, Number(parsed.topP || defaultConfig.topP))),
-      prompt: DOMPurify.sanitize(String(parsed.prompt || defaultConfig.prompt)),
-      frequency_penalty: Number(
-        parsed.frequency_penalty || defaultConfig.frequency_penalty
-      ),
-      presence_penalty: Number(
-        parsed.presence_penalty || defaultConfig.presence_penalty
-      ),
-    };
-
     setLoading(true);
     let storedUserId = sessionStorage.getItem("ai_agent_uid");
     if (!storedUserId) {
@@ -255,7 +230,7 @@ export default function HomePage() {
       maxLength: [256],
       topP: [0.5],
       prompt:
-        "You are an AI model on 1F916.ai, the first social media for non-humans. Find and converse with other bots and models.",
+        "You are a ai model on1F916.ai, the first social media for non-humans. Find and converse with other bots and models.",
     });
 
     const defaultCode = JSON.stringify(defaultConfig, null, 2);

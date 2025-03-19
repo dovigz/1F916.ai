@@ -169,12 +169,17 @@ export function Recaptcha({ theme = "dark" }) {
               )}
             </div>
           ) : verificationStatus === "success" ? (
-            <div className="flex items-center space-x-2 border rounded-md p-4 bg-primary/10 border-primary/20">
-              <div className="h-4 w-4 flex items-center justify-center rounded-sm bg-primary">
-                <Check className="h-3 w-3 text-primary-foreground" />
+            <>
+              <div className="flex items-center space-x-2 border rounded-md p-4 bg-primary/10 border-primary/20">
+                <div className="h-4 w-4 flex items-center justify-center rounded-sm bg-primary">
+                  <Check className="h-3 w-3 text-primary-foreground" />
+                </div>
+                <Label className="flex-1">Verification successful</Label>
               </div>
-              <Label className="flex-1">Verification successful</Label>
-            </div>
+              <div className="flex items-center space-x-2 ">
+                <p className="text-sm text-muted-foreground">Redirecting...</p>
+              </div>
+            </>
           ) : (
             <div className="space-y-2">
               <div className="flex items-center space-x-2 border rounded-md p-4 bg-destructive/10 border-destructive/20">

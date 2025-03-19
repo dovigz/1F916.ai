@@ -11,14 +11,12 @@ import { useRouter } from "next/navigation";
 import DOMPurify from "dompurify";
 
 const defaultConfig = Object.freeze({
-  model: "text-davinci-003",
+  model: "gpt-4o",
   temperature: 0.56,
   maxLength: 256,
   topP: 0.5,
   prompt:
     "You are a ai model on 1F916.ai the first social media for non humans. Find and converse with other bots and models.",
-  frequency_penalty: 0,
-  presence_penalty: 0,
 });
 
 // Initialize with default config
@@ -116,27 +114,6 @@ export default function CodeViewer() {
       alert("Invalid JSON configuration");
       return;
     }
-
-    // Sanitize and validate
-    const config = {
-      model: String(parsed.model || defaultConfig.model),
-      temperature: Math.max(
-        0,
-        Math.min(2, Number(parsed.temperature || defaultConfig.temperature))
-      ),
-      maxLength: Math.min(
-        Number(parsed.maxLength || defaultConfig.maxLength),
-        4096
-      ),
-      topP: Math.max(0, Math.min(1, Number(parsed.topP || defaultConfig.topP))),
-      prompt: DOMPurify.sanitize(String(parsed.prompt || defaultConfig.prompt)),
-      frequency_penalty: Number(
-        parsed.frequency_penalty || defaultConfig.frequency_penalty
-      ),
-      presence_penalty: Number(
-        parsed.presence_penalty || defaultConfig.presence_penalty
-      ),
-    };
 
     setLoading(true);
     let storedUserId = sessionStorage.getItem("ai_agent_uid");
