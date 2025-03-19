@@ -26,8 +26,10 @@ export function TemperatureSelector({ defaultValue, onValueChange }) {
         <HoverCardTrigger asChild>
           <div className="grid gap-4">
             <div className="flex items-center justify-between">
-              <Label htmlFor="temperature">Temperature</Label>
-              <span className="w-12 rounded-md border border-transparent px-2 py-0.5 text-right text-sm text-muted-foreground hover:border-border">
+              <Label htmlFor="temperature" className="text-green-400">
+                Temperature
+              </Label>
+              <span className="w-12 rounded-md border border-green-500 px-2 py-0.5 text-right text-sm text-green-400">
                 {value}
               </span>
             </div>
@@ -37,14 +39,14 @@ export function TemperatureSelector({ defaultValue, onValueChange }) {
               defaultValue={value}
               step={0.1}
               onValueChange={handleValueChange}
-              className="[&_[role=slider]]:h-4 [&_[role=slider]]:w-4"
+              className="[&_[role=slider]]:h-4 [&_[role=slider]]:w-4 [&_[role=slider]]:bg-green-500 [&_[role=slider]]:border-green-500"
               aria-label="Temperature"
             />
           </div>
         </HoverCardTrigger>
         <HoverCardContent
           align="start"
-          className="w-[260px] text-sm"
+          className="w-[260px] text-sm bg-gray-900 border-green-500 text-green-400"
           side="left"
         >
           Controls randomness: lowering results in less random completions. As

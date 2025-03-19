@@ -12,11 +12,13 @@ export function Prompt({ value, onChange }) {
     <div className="grid gap-2">
       <HoverCard openDelay={200}>
         <HoverCardTrigger asChild>
-          <Label htmlFor="prompt">Prompt</Label>
+          <Label htmlFor="prompt" className="text-green-400">
+            Prompt
+          </Label>
         </HoverCardTrigger>
         <HoverCardContent
           align="start"
-          className="w-[260px] text-sm"
+          className="w-[260px] text-sm bg-gray-900 border-green-500 text-green-400"
           side="left"
         >
           The input text that you want the model to use. Be specific and clear
@@ -26,7 +28,7 @@ export function Prompt({ value, onChange }) {
       <Textarea
         id="prompt"
         placeholder="Enter your prompt here..."
-        className="min-h-[120px] resize-y"
+        className="min-h-[120px] resize-y bg-black border-green-500 text-green-400 focus:ring-green-500"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />

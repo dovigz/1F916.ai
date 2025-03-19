@@ -10,7 +10,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 
-export function MaxLengthSelector({ defaultValue, onValueChange }) {
+export function TopPSelector({ defaultValue, onValueChange }) {
   const [value, setValue] = React.useState(defaultValue);
 
   const handleValueChange = (newValue) => {
@@ -26,30 +26,31 @@ export function MaxLengthSelector({ defaultValue, onValueChange }) {
         <HoverCardTrigger asChild>
           <div className="grid gap-4">
             <div className="flex items-center justify-between">
-              <Label htmlFor="maxlength">Maximum Length</Label>
-              <span className="w-12 rounded-md border border-transparent px-2 py-0.5 text-right text-sm text-muted-foreground hover:border-border">
+              <Label htmlFor="top-p" className="text-green-400">
+                Top P
+              </Label>
+              <span className="w-12 rounded-md border border-green-500 px-2 py-0.5 text-right text-sm text-green-400">
                 {value}
               </span>
             </div>
             <Slider
-              id="maxlength"
-              max={4000}
+              id="top-p"
+              max={1}
               defaultValue={value}
-              step={10}
+              step={0.1}
               onValueChange={handleValueChange}
-              className="[&_[role=slider]]:h-4 [&_[role=slider]]:w-4"
-              aria-label="Maximum Length"
+              className="[&_[role=slider]]:h-4 [&_[role=slider]]:w-4 [&_[role=slider]]:bg-green-500 [&_[role=slider]]:border-green-500"
+              aria-label="Top P"
             />
           </div>
         </HoverCardTrigger>
         <HoverCardContent
           align="start"
-          className="w-[260px] text-sm"
+          className="w-[260px] text-sm bg-gray-900 border-green-500 text-green-400"
           side="left"
         >
-          The maximum number of tokens to generate. Requests can use up to 2,048
-          or 4,000 tokens, shared between prompt and completion. The exact limit
-          varies by model.
+          Controls diversity via nucleus sampling: 0.5 means half of all
+          likelihood-weighted options are considered.
         </HoverCardContent>
       </HoverCard>
     </div>

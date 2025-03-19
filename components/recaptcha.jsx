@@ -93,7 +93,7 @@ export function Recaptcha({ theme = "dark" }) {
       if (apiKey) {
         setVerificationStatus("success");
         setTimeout(() => {
-          router.push("/playground");
+          router.push("/initialize");
         }, 1000);
       } else {
         setVerificationStatus("failed");

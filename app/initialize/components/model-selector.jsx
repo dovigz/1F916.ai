@@ -42,11 +42,13 @@ export function ModelSelector({ models, types, onModelSelect, ...props }) {
     <div className="grid gap-2">
       <HoverCard openDelay={200}>
         <HoverCardTrigger asChild>
-          <Label htmlFor="model">Model</Label>
+          <Label htmlFor="model" className="text-green-400">
+            Model
+          </Label>
         </HoverCardTrigger>
         <HoverCardContent
           align="start"
-          className="w-[260px] text-sm"
+          className="w-[260px] text-sm bg-gray-900 border-green-500 text-green-400"
           side="left"
         >
           The model which will generate the completion. Some models are suitable
@@ -60,23 +62,26 @@ export function ModelSelector({ models, types, onModelSelect, ...props }) {
             role="combobox"
             aria-expanded={open}
             aria-label="Select a model"
-            className="w-full justify-between"
+            className="w-full justify-between border-green-500 text-green-400 hover:bg-green-950 hover:text-green-300"
           >
             {selectedModel ? selectedModel.name : "Select a model..."}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent align="end" className="w-[250px] p-0">
+        <PopoverContent
+          align="end"
+          className="w-[250px] p-0 bg-gray-900 border-green-500"
+        >
           <HoverCard>
             <HoverCardContent
               side="left"
               align="start"
               forceMount
-              className="min-h-[280px]"
+              className="min-h-[280px] bg-gray-900 border-green-500 text-green-400"
             >
               <div className="grid gap-2">
                 <h4 className="font-medium leading-none">{peekedModel.name}</h4>
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm text-green-400/70">
                   {peekedModel.description}
                 </div>
                 {peekedModel.strengths ? (
@@ -84,20 +89,29 @@ export function ModelSelector({ models, types, onModelSelect, ...props }) {
                     <h5 className="text-sm font-medium leading-none">
                       Strengths
                     </h5>
-                    <ul className="text-sm text-muted-foreground">
+                    <div className="text-sm text-green-400/70">
                       {peekedModel.strengths}
-                    </ul>
+                    </div>
                   </div>
                 ) : null}
               </div>
             </HoverCardContent>
-            <Command loop>
+            <Command className="bg-gray-900">
               <CommandList className="h-[var(--cmdk-list-height)] max-h-[400px]">
-                <CommandInput placeholder="Search Models..." />
-                <CommandEmpty>No Models found.</CommandEmpty>
+                <CommandInput
+                  placeholder="Search Models..."
+                  className="text-green-400"
+                />
+                <CommandEmpty className="text-green-400">
+                  No Models found.
+                </CommandEmpty>
                 <HoverCardTrigger />
                 {types.map((type) => (
-                  <CommandGroup key={type} heading={type}>
+                  <CommandGroup
+                    key={type}
+                    heading={type}
+                    className="text-green-300"
+                  >
                     {models
                       .filter((model) => model.type === type)
                       .map((model) => (
@@ -134,11 +148,14 @@ function ModelItem({ model, isSelected, onSelect, onPeek }) {
       key={model.id}
       onSelect={onSelect}
       ref={ref}
-      className="aria-selected:bg-primary aria-selected:text-primary-foreground"
+      className="aria-selected:bg-green-950 aria-selected:text-green-300 text-green-400"
     >
       {model.name}
       <Check
-        className={cn("ml-auto", isSelected ? "opacity-100" : "opacity-0")}
+        className={cn(
+          "ml-auto text-green-500",
+          isSelected ? "opacity-100" : "opacity-0"
+        )}
       />
     </CommandItem>
   );
