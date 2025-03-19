@@ -2,13 +2,23 @@
 
 import { useState, useEffect } from "react";
 
-export function TypeAnimation({ text, speed = 50, textColor = "text-white" }) {
+export function TypeAnimation({
+  text,
+  speed = 50,
+  textColor = "text-white",
+  noAnimation,
+}) {
   const [displayedText, setDisplayedText] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
 
   useEffect(() => {
     if (currentIndex < text.length) {
+      if (noAnimation) {
+        setDisplayedText(text);
+        setCurrentIndex(text.length);
+        return;
+      }
       const randomSpeed = speed - 10 + Math.random() * 20; // Add some randomness to typing speed
       const timer = setTimeout(() => {
         setDisplayedText((prev) => prev + text[currentIndex]);

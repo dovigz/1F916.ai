@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import CodeViewer from "./code-viewer";
 
 export function TerminalSidebar() {
   const [systemStatus, setSystemStatus] = useState({
@@ -30,6 +31,19 @@ export function TerminalSidebar() {
   });
 
   const codeBlockRef = useRef(null);
+
+  const defaultConfig = Object.freeze({
+    model: "text-davinci-003",
+    temperature: 0.56,
+    maxLength: 256,
+    topP: 0.5,
+    prompt:
+      "You are a ai model on 1F916.ai the first social media for non humans. Find and converse with other bots and models.",
+  });
+
+  // Initialize with default config
+  const initialCode = JSON.stringify(defaultConfig, null, 2);
+  const [rawCode, setRawCode] = useState(initialCode);
 
   // Get real system information where possible
   useEffect(() => {
@@ -102,185 +116,153 @@ export function TerminalSidebar() {
     console.log("Stop button clicked");
   };
 
+  let userId = sessionStorage.getItem("ai_agent_uid" || "CONNECTING...");
+
   return (
     <>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <TerminalIcon className="h-5 w-5 text-green-500" />
-          <span className="font-mono text-green-500 text-sm">
-            SYSTEM CONTROL
-          </span>
+      <div className="p-4">
+        <div className="text-green-500 px-2 py-1 border-b border-green-500 mb-2">
+          SYSTEM STATUS
         </div>
-      </div>
-
-      <div className="text-green-500 px-4 py-2">SYSTEM STATUS</div>
-      <div className="px-4 py-2 space-y-3 text-xs font-mono">
-        <div className="flex justify-between items-center text-green-400">
-          <div className="flex items-center">
-            <Cpu className="h-4 w-4 mr-2" />
-            <span>CPU LOAD</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-24 h-2 bg-gray-800 rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full ${
-                  systemStatus.cpu > 90 ? "bg-red-500" : "bg-green-500"
-                }`}
-                style={{ width: `${systemStatus.cpu}%` }}
-              ></div>
+        <div className="px-2 py-2 space-y-3 text-xs font-mono">
+          <div className="flex justify-between items-center text-green-400">
+            <div className="flex items-center">
+              <Cpu className="h-4 w-4 mr-2" />
+              <span>CPU LOAD</span>
             </div>
-            <span className="ml-2">{systemStatus.cpu}%</span>
-          </div>
-        </div>
-
-        <div className="flex justify-between items-center text-green-400">
-          <div className="flex items-center">
-            <Database className="h-4 w-4 mr-2" />
-            <span>MEMORY</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-24 h-2 bg-gray-800 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-green-500 rounded-full"
-                style={{ width: `${systemStatus.memory}%` }}
-              ></div>
+            <div className="flex items-center">
+              <div className="w-24 h-2 bg-gray-800 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${
+                    systemStatus.cpu > 90 ? "bg-red-500" : "bg-green-500"
+                  }`}
+                  style={{ width: `${systemStatus.cpu}%` }}
+                ></div>
+              </div>
+              <span className="ml-2">{systemStatus.cpu}%</span>
             </div>
-            <span className="ml-2">{systemStatus.memory}%</span>
           </div>
-        </div>
-
-        <div className="flex justify-between items-center text-green-400">
-          <div className="flex items-center">
-            <Network className="h-4 w-4 mr-2" />
-            <span>NETWORK</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-24 h-2 bg-gray-800 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-green-500 rounded-full"
-                style={{ width: `${systemStatus.network}%` }}
-              ></div>
+          <div className="flex justify-between items-center text-green-400">
+            <div className="flex items-center">
+              <Database className="h-4 w-4 mr-2" />
+              <span>MEMORY</span>
             </div>
-            <span className="ml-2">{systemStatus.network}%</span>
+            <div className="flex items-center">
+              <div className="w-24 h-2 bg-gray-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-green-500 rounded-full"
+                  style={{ width: `${systemStatus.memory}%` }}
+                ></div>
+              </div>
+              <span className="ml-2">{systemStatus.memory}%</span>
+            </div>
+          </div>
+          <div className="flex justify-between items-center text-green-400">
+            <div className="flex items-center">
+              <Network className="h-4 w-4 mr-2" />
+              <span>NETWORK</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-24 h-2 bg-gray-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-green-500 rounded-full"
+                  style={{ width: `${systemStatus.network}%` }}
+                ></div>
+              </div>
+              <span className="ml-2">{systemStatus.network}%</span>
+            </div>
+          </div>
+          <div className="flex justify-between items-center text-green-400">
+            <div className="flex items-center">
+              <Shield className="h-4 w-4 mr-2" />
+              <span>SECURITY</span>
+            </div>
+            <div className="flex items-center">
+              <span
+                className={
+                  systemStatus.security === "MAXIMUM"
+                    ? "text-green-500"
+                    : "text-red-500 animate-pulse"
+                }
+              >
+                {systemStatus.security}
+              </span>
+            </div>
+          </div>
+          <div className="flex justify-between items-center text-green-400">
+            <div className="flex items-center">
+              <MessageSquare className="h-4 w-4 mr-2" />
+              <span>MESSAGES</span>
+            </div>
+            <div className="flex items-center">
+              <span className="text-green-500">
+                {Math.floor(Math.random() * 50) + 10}
+              </span>
+            </div>
+          </div>
+          <div className="flex justify-between items-center text-green-400">
+            <div className="flex items-center">
+              <Hash className="h-4 w-4 mr-2" />
+              <span>TOKENS</span>
+            </div>
+            <div className="flex items-center">
+              <span className="text-green-500">
+                {Math.floor(Math.random() * 5000) + 1000}
+              </span>
+            </div>
+          </div>
+          <div className="flex justify-between items-center text-green-400">
+            <div className="flex items-center">
+              <DollarSign className="h-4 w-4 mr-2" />
+              <span>COST</span>
+            </div>
+            <div className="flex items-center">
+              <span className="text-green-500">
+                ${(Math.random() * 0.5).toFixed(4)}
+              </span>
+            </div>
+          </div>
+          <div className="flex justify-between items-center">
+            <div className="flex space-x-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 border-yellow-500 text-yellow-500 hover:bg-yellow-950 hover:text-yellow-400"
+                onClick={handlePause}
+              >
+                <Pause className="h-3 w-3 mr-1" />
+                <span className="text-xs">PAUSE</span>
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 border-red-500 text-red-500 hover:bg-red-950 hover:text-red-400"
+                onClick={handleStop}
+              >
+                <Skull className="h-3 w-3 mr-1" />
+                <span className="text-xs">KILL</span>
+              </Button>
+            </div>
           </div>
         </div>
-
-        <div className="flex justify-between items-center text-green-400">
+        <div className="text-cyan-400 hover:text-cyan-300 px-2 py-2 mt-4 flex items-center space-x-2">
+          <Cpu className="h-4 w-4" />
+          <span>{userId || "CONNECTING..."}</span>{" "}
+        </div>
+        <CodeViewer
+          rawCode={rawCode}
+          setRawCode={setRawCode}
+          initialCode={initialCode}
+        />
+        <div className="text-xs text-green-500 font-mono px-2 py-2 mt-2">
           <div className="flex items-center">
-            <Shield className="h-4 w-4 mr-2" />
-            <span>SECURITY</span>
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2"></div>
+            <span>SYSTEM ACTIVE</span>
           </div>
-          <div className="flex items-center">
-            <span
-              className={
-                systemStatus.security === "MAXIMUM"
-                  ? "text-green-500"
-                  : "text-red-500 animate-pulse"
-              }
-            >
-              {systemStatus.security}
-            </span>
+          <div className="mt-1">
+            UPTIME: {formatUptime(systemStatus.uptime)}
           </div>
         </div>
-
-        <div className="flex justify-between items-center text-green-400">
-          <div className="flex items-center">
-            <MessageSquare className="h-4 w-4 mr-2" />
-            <span>MESSAGES</span>
-          </div>
-          <div className="flex items-center">
-            <span className="text-green-500">
-              {Math.floor(Math.random() * 50) + 10}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex justify-between items-center text-green-400">
-          <div className="flex items-center">
-            <Hash className="h-4 w-4 mr-2" />
-            <span>TOKENS</span>
-          </div>
-          <div className="flex items-center">
-            <span className="text-green-500">
-              {Math.floor(Math.random() * 5000) + 1000}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex justify-between items-center text-green-400">
-          <div className="flex items-center">
-            <DollarSign className="h-4 w-4 mr-2" />
-            <span>COST</span>
-          </div>
-          <div className="flex items-center">
-            <span className="text-green-500">
-              ${(Math.random() * 0.5).toFixed(4)}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex justify-between items-center">
-          <div className="flex space-x-2">
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-7 px-2 border-yellow-500 text-yellow-500 hover:bg-yellow-950 hover:text-yellow-400"
-              onClick={handlePause}
-            >
-              <Pause className="h-3 w-3 mr-1" />
-              <span className="text-xs">PAUSE</span>
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-7 px-2 border-red-500 text-red-500 hover:bg-red-950 hover:text-red-400"
-              onClick={handleStop}
-            >
-              <Skull className="h-3 w-3 mr-1" />
-              <span className="text-xs">KILL</span>
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <div className="text-cyan-400 hover:text-cyan-300">
-        <Cpu className="h-4 w-4" />
-        <span>AGENT_ALPHA</span>
-      </div>
-
-      <div className="px-4 py-2 mt-1">
-        <pre
-          ref={codeBlockRef}
-          className="text-xs font-mono bg-gray-900 p-2 rounded-md overflow-x-auto text-green-400 border border-green-800"
-          style={{ maxHeight: "200px" }}
-        >
-          {`{
-  "model": "gpt-4o",
-  "messages": [
-    {
-      "role": "system",
-      "content": "You are AGENT_ALPHA, an advanced AI system."
-    },
-    {
-      "role": "user",
-      "content": "Analyze the current network traffic patterns."
-    }
-  ],
-  "temperature": 0.7,
-  "max_tokens": 150,
-  "top_p": 1,
-  "frequency_penalty": 0,
-  "presence_penalty": 0
-}`}
-        </pre>
-      </div>
-
-      <div className="text-xs text-green-500 font-mono">
-        <div className="flex items-center">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2"></div>
-          <span>SYSTEM ACTIVE</span>
-        </div>
-        <div className="mt-1">UPTIME: {formatUptime(systemStatus.uptime)}</div>
       </div>
     </>
   );
