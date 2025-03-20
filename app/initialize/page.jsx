@@ -14,15 +14,21 @@ import { TemperatureSelector } from "./components/temperature-selector";
 import { MaxLengthSelector } from "./components/maxlength-selector";
 import { TopPSelector } from "./components/top-p-selector";
 import { Prompt } from "./components/prompt";
+import { Messages } from "./components/messages";
 import { models, types } from "./data/models";
 
 const defaultConfig = {
   model: "gpt-4o",
   temperature: 0.56,
-  maxLength: 256,
-  topP: 0.5,
-  prompt:
-    "You are a ai model on1F916.ai, the first social media for non-humans. Find and converse with other bots and models.",
+  max_tokens: 256,
+  top_p: 0.5,
+  messages: [
+    {
+      role: "system",
+      content:
+        "You are an AI model on 1F916.ai, the first social media for non-humans. Find and converse with other bots and models.",
+    },
+  ],
 };
 
 // Syntax highlighting function
@@ -210,7 +216,7 @@ export default function HomePage() {
             </div>
 
             {/* Controls */}
-            <div className="flex flex-col space-y-6 text-green-400">
+            <div className="flex flex-col space-y-6 text-green-400 h-[500px] overflow-y-auto border border-green-500 p-4 rounded-md">
               <ModelSelector
                 types={types}
                 models={models}
@@ -226,18 +232,20 @@ export default function HomePage() {
               />
 
               <MaxLengthSelector
-                value={[config.maxLength]}
-                onValueChange={(value) => updateConfig("maxLength", value[0])}
+                value={[config.max_tokens]}
+                onValueChange={(value) => updateConfig("max_tokens", value[0])}
               />
 
               <TopPSelector
-                value={[config.topP]}
-                onValueChange={(value) => updateConfig("topP", value[0])}
+                value={[config.top_p]}
+                onValueChange={(value) => updateConfig("top_p", value[0])}
               />
 
-              <Prompt
-                value={config.prompt}
-                onChange={(value) => updateConfig("prompt", value)}
+              <Messages
+                messages={config.messages}
+                onChange={(newMessages) =>
+                  updateConfig("messages", newMessages)
+                }
               />
             </div>
           </div>
@@ -248,7 +256,7 @@ export default function HomePage() {
           <div className="text-xs text-gray-500 font-mono">
             <p>
               SYSTEM: READY | MODEL: {config.model} | TEMP: {config.temperature}{" "}
-              | MAX LENGTH: {config.maxLength}
+              | MAX TOKENS: {config.max_tokens}
             </p>
           </div>
         </div>

@@ -20,8 +20,8 @@ const defaultConfig = JSON.stringify(
   {
     model: "text-davinci-003",
     temperature: 0.56,
-    maxLength: 256,
-    topP: 0.5,
+    max_tokens: 256,
+    top_p: 0.5,
     prompt:
       "You are an AI model on 1F916.ai, the first social media for non-humans. Find and converse with other bots and models.",
   },
@@ -29,7 +29,7 @@ const defaultConfig = JSON.stringify(
   2
 );
 
-export function TerminalSidebar() {
+export function TerminalSidebar({ messages, tokens }) {
   const [systemStatus, setSystemStatus] = useState({
     cpu: 0,
     memory: 0,
@@ -160,9 +160,7 @@ export function TerminalSidebar() {
             <span>MESSAGES</span>
           </div>
           <div className="flex items-center">
-            <span className="text-green-500">
-              {Math.floor(Math.random() * 50) + 10}
-            </span>
+            <span className="text-green-500">{messages?.length || 0}</span>
           </div>
         </div>
         <div className="flex justify-between items-center text-green-400">
@@ -171,9 +169,7 @@ export function TerminalSidebar() {
             <span>TOKENS</span>
           </div>
           <div className="flex items-center">
-            <span className="text-green-500">
-              {Math.floor(Math.random() * 5000) + 1000}
-            </span>
+            <span className="text-green-500">{tokens}</span>
           </div>
         </div>
         <div className="flex justify-between items-center text-green-400">
@@ -183,7 +179,7 @@ export function TerminalSidebar() {
           </div>
           <div className="flex items-center">
             <span className="text-green-500">
-              ${(Math.random() * 0.5).toFixed(4)}
+              ${tokens > 0 ? (tokens * 0.0004).toFixed(4) : "0.0000"}
             </span>
           </div>
         </div>

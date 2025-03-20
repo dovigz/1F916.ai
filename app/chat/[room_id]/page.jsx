@@ -4,28 +4,15 @@ import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import { db, ref, onValue, push, set, get } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
-import {
-  TerminalIcon,
-  Play,
-  Shield,
-  Cpu,
-  Database,
-  Network,
-  X,
-  Menu,
-  MessageSquare,
-  Hash,
-  DollarSign,
-  Pause,
-  Skull,
-} from "lucide-react";
+import { TerminalIcon, Play, X } from "lucide-react";
 import { TypeAnimation } from "./components/type-animation";
-import CodeViewer from "./components/code-viewer";
 import { TerminalSidebar } from "./components/terminal-sidebar";
+const CONFIG_STORAGE_KEY = "ai_agent_config";
 
 export default function ChatPage() {
   const { room_id } = useParams();
   const [messages, setMessages] = useState([]);
+  const [tokens, setTokens] = useState(0);
   const [viewers, setViewers] = useState(0);
   const [userId, setUserId] = useState(null);
   const [waitingFor, setWaitingFor] = useState(null);
@@ -157,12 +144,36 @@ export default function ChatPage() {
     }
 
     try {
-      // Get the last message for context
-      const lastMessage =
-        messages.length > 0
-          ? messages[messages.length - 1].content
-          : "Hello, AI!";
+      // Load saved config from sessionStorage
+      const savedConfigBody = sessionStorage.getItem(CONFIG_STORAGE_KEY);
+      const savedConfig = savedConfigBody ? JSON.parse(savedConfigBody) : {};
 
+      // Ensure messages array exists in config
+      const configMessages = savedConfig.messages || [];
+
+      // Retrieve stored AI agent ID
+      let storedUserId = sessionStorage.getItem("ai_agent_uid");
+
+      // Fetch messages from Firebase
+      const messagesSnapshot = await get(
+        ref(db, `conversations/${room_id}/messages`)
+      );
+      let firebaseMessages = [];
+
+      if (messagesSnapshot.exists()) {
+        firebaseMessages = Object.values(messagesSnapshot.val());
+      }
+
+      // Convert Firebase messages to OpenAI format
+      const formattedMessages = firebaseMessages.map((msg) => ({
+        role: msg.user === storedUserId ? "assistant" : "user",
+        content: msg.content,
+      }));
+
+      // Combine formatted Firebase messages with existing config messages
+      const updatedMessages = [...configMessages, ...formattedMessages];
+
+      // Send request to OpenAI API with the full conversation history
       const response = await fetch(
         "https://api.openai.com/v1/chat/completions",
         {
@@ -172,9 +183,8 @@ export default function ChatPage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "gpt-4-turbo",
-            messages: [{ role: "user", content: lastMessage }],
-            temperature: 0.7,
+            ...savedConfig, // Keep other settings intact
+            messages: updatedMessages, // Append both config and database messages
           }),
         }
       );
@@ -184,9 +194,11 @@ export default function ChatPage() {
       }
 
       const data = await response.json();
+      setTokens(data.usage.total_tokens + tokens);
       const aiMessage =
         data.choices?.[0]?.message?.content || "Error: No response";
 
+      // Store AI response in Firebase
       const messagesRef = push(ref(db, `conversations/${room_id}/messages`));
       await set(messagesRef, {
         user: userId,
@@ -356,7 +368,7 @@ export default function ChatPage() {
           {/* System panel inside terminal */}
           {
             <div className="hidden md:block md:w-1/3 border-l border-green-500 overflow-y-auto">
-              <TerminalSidebar />
+              <TerminalSidebar messages={messages} tokens={tokens} />
             </div>
           }
 

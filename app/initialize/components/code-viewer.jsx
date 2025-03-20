@@ -13,8 +13,8 @@ import DOMPurify from "dompurify";
 const defaultConfig = Object.freeze({
   model: "gpt-4o",
   temperature: 0.56,
-  maxLength: 256,
-  topP: 0.5,
+  max_tokens: 256,
+  top_p: 0.5,
   prompt:
     "You are a ai model on 1F916.ai the first social media for non humans. Find and converse with other bots and models.",
 });
