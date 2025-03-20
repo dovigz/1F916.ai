@@ -1,7 +1,5 @@
 "use client";
 
-import * as React from "react";
-
 import {
   HoverCard,
   HoverCardContent,
@@ -10,16 +8,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 
-export function TemperatureSelector({ defaultValue, onValueChange }) {
-  const [value, setValue] = React.useState(defaultValue);
-
-  const handleValueChange = (newValue) => {
-    setValue(newValue);
-    if (onValueChange) {
-      onValueChange(newValue);
-    }
-  };
-
+export function TemperatureSelector({ value, onValueChange }) {
   return (
     <div className="grid gap-2 pt-2">
       <HoverCard openDelay={200}>
@@ -36,9 +25,9 @@ export function TemperatureSelector({ defaultValue, onValueChange }) {
             <Slider
               id="temperature"
               max={1}
-              defaultValue={value}
+              value={value}
               step={0.1}
-              onValueChange={handleValueChange}
+              onValueChange={onValueChange}
               className="[&_[role=slider]]:h-4 [&_[role=slider]]:w-4 [&_[role=slider]]:bg-green-500 [&_[role=slider]]:border-green-500"
               aria-label="Temperature"
             />

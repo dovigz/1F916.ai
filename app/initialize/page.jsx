@@ -16,22 +16,20 @@ import { TopPSelector } from "./components/top-p-selector";
 import { Prompt } from "./components/prompt";
 import { models, types } from "./data/models";
 
-const defaultConfig = Object.freeze({
+const defaultConfig = {
   model: "gpt-4o",
   temperature: 0.56,
   maxLength: 256,
   topP: 0.5,
   prompt:
     "You are a ai model on1F916.ai, the first social media for non-humans. Find and converse with other bots and models.",
-});
+};
 
-// Initialize with default config
-const initialCode = JSON.stringify(defaultConfig, null, 2);
-
+// Syntax highlighting function
 const syntaxHighlight = (json) => {
   const safeJson = DOMPurify.sanitize(json);
   return safeJson.replace(
-    /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+    /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
     (match) => {
       let cls = "text-foreground";
       if (/^"/.test(match)) {
@@ -48,127 +46,49 @@ const syntaxHighlight = (json) => {
   );
 };
 
+// Add a constant for the session storage key
+const CONFIG_STORAGE_KEY = "ai_agent_config";
+
 export default function HomePage() {
   const router = useRouter();
   const [loading, setLoading] = React.useState(false);
-  const [rawCode, setRawCode] = React.useState(initialCode);
   const preRef = React.useRef(null);
-  const textRef = React.useRef(null);
 
-  const [config, setConfig] = React.useState({
-    model: models[0],
-    temperature: [0.56],
-    maxLength: [256],
-    topP: [0.5],
-    prompt:
-      "You are a ai model on1F916.ai, the first social media for non-humans. Find and converse with other bots and models.",
-  });
+  // Single source of truth for the configuration
+  const [config, setConfig] = React.useState(defaultConfig);
 
-  // Initialize editor content
-  React.useLayoutEffect(() => {
-    if (textRef.current && preRef.current) {
-      textRef.current.textContent = initialCode;
-      preRef.current.innerHTML = syntaxHighlight(initialCode);
+  // Load saved configuration from sessionStorage on initial render
+  React.useEffect(() => {
+    // Only run in the browser
+    if (typeof window !== "undefined") {
+      const savedConfig = sessionStorage.getItem(CONFIG_STORAGE_KEY);
+      if (savedConfig) {
+        try {
+          const parsedConfig = JSON.parse(savedConfig);
+          setConfig(parsedConfig);
+        } catch (error) {
+          console.error("Failed to parse saved configuration:", error);
+        }
+      }
     }
   }, []);
 
-  // Update code when config changes
+  // Update the syntax highlighted view whenever config changes
   React.useEffect(() => {
-    const newConfig = {
-      model: config.model?.name || "gpt-4o",
-      temperature: config.temperature[0],
-      maxLength: config.maxLength[0],
-      topP: config.topP[0],
-      prompt: config.prompt,
-    };
-
-    const newCode = JSON.stringify(newConfig, null, 2);
-    setRawCode(newCode);
-
     if (preRef.current) {
-      preRef.current.innerHTML = syntaxHighlight(newCode);
-    }
-
-    if (textRef.current) {
-      textRef.current.textContent = newCode;
+      const jsonString = JSON.stringify(config, null, 2);
+      preRef.current.innerHTML = syntaxHighlight(jsonString);
     }
   }, [config]);
 
+  // Update a specific field in the config
   const updateConfig = (key, value) => {
     setConfig((prev) => ({ ...prev, [key]: value }));
   };
 
-  const saveCursorPosition = () => {
-    const sel = window.getSelection();
-    if (sel.rangeCount === 0) return null;
-    const range = sel.getRangeAt(0);
-    const preRange = range.cloneRange();
-    preRange.selectNodeContents(textRef.current);
-    preRange.setEnd(range.startContainer, range.startOffset);
-    return preRange.toString().length;
-  };
-
-  const restoreCursorPosition = (position) => {
-    if (position === null) return;
-    const textNode = textRef.current.firstChild;
-    if (!textNode) return;
-
-    const range = document.createRange();
-    const sel = window.getSelection();
-    let pos = 0;
-    let node = textNode;
-
-    while (pos < position && node.length > 0) {
-      const nextPos = pos + node.length;
-      if (nextPos > position) break;
-      pos = nextPos;
-      node = node.nextSibling;
-    }
-
-    const offset = position - pos;
-    range.setStart(node, Math.min(offset, node.length));
-    range.collapse(true);
-    sel.removeAllRanges();
-    sel.addRange(range);
-  };
-
-  const handleInput = (e) => {
-    const newText = DOMPurify.sanitize(e.currentTarget.textContent);
-    const cursorPos = saveCursorPosition();
-
-    setRawCode(newText);
-
-    if (preRef.current) {
-      preRef.current.innerHTML = syntaxHighlight(newText);
-    }
-
-    requestAnimationFrame(() => {
-      restoreCursorPosition(cursorPos);
-    });
-
-    // Try to parse and update the config
-    try {
-      const parsed = JSON.parse(newText);
-      setConfig({
-        model: models.find((m) => m.name === parsed.model) || models[0],
-        temperature: [parsed.temperature || 0.56],
-        maxLength: [parsed.maxLength || 256],
-        topP: [parsed.topP || 0.5],
-        prompt: parsed.prompt || config.prompt,
-      });
-    } catch (e) {
-      // Ignore parsing errors while typing
-    }
-  };
-
   const handleSubmit = async () => {
-    let parsed;
-    try {
-      parsed = JSON.parse(rawCode);
-    } catch (e) {
-      alert("Invalid JSON configuration");
-      return;
-    }
+    // Save the current configuration to sessionStorage
+    sessionStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(config));
 
     setLoading(true);
     let storedUserId = sessionStorage.getItem("ai_agent_uid");
@@ -217,32 +137,9 @@ export default function HomePage() {
     }
   };
 
-  const handlePaste = (e) => {
-    e.preventDefault();
-    const text = (e.clipboardData || window.clipboardData).getData("text");
-    document.execCommand("insertText", false, DOMPurify.sanitize(text));
-  };
-
   const resetConfig = () => {
-    setConfig({
-      model: models[0],
-      temperature: [0.56],
-      maxLength: [256],
-      topP: [0.5],
-      prompt:
-        "You are a ai model on1F916.ai, the first social media for non-humans. Find and converse with other bots and models.",
-    });
-
-    const defaultCode = JSON.stringify(defaultConfig, null, 2);
-    setRawCode(defaultCode);
-
-    if (preRef.current) {
-      preRef.current.innerHTML = syntaxHighlight(defaultCode);
-    }
-
-    if (textRef.current) {
-      textRef.current.textContent = defaultCode;
-    }
+    setConfig(defaultConfig);
+    // Don't clear from sessionStorage until they submit the reset config
   };
 
   return (
@@ -265,7 +162,7 @@ export default function HomePage() {
         {/* Terminal content */}
         <div className="flex-grow p-4 md:p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Code editor */}
+            {/* Code viewer */}
             <div className="flex flex-col space-y-4">
               <Card className="relative overflow-hidden rounded-md border border-green-500 bg-black">
                 <div className="flex justify-between items-center p-3 bg-gray-900 border-b border-green-500">
@@ -276,7 +173,11 @@ export default function HomePage() {
                     variant="ghost"
                     size="sm"
                     className="h-8 px-2 text-green-500 hover:text-green-400 hover:bg-green-950"
-                    onClick={() => navigator.clipboard.writeText(rawCode)}
+                    onClick={() =>
+                      navigator.clipboard.writeText(
+                        JSON.stringify(config, null, 2)
+                      )
+                    }
                   >
                     <Clipboard className="h-4 w-4 mr-1" />
                     Copy
@@ -285,16 +186,7 @@ export default function HomePage() {
                 <div className="relative rounded-md bg-black overflow-auto">
                   <pre
                     ref={preRef}
-                    className="absolute m-0 p-6 font-mono text-sm pointer-events-none whitespace-pre-wrap break-words"
-                  />
-                  <div
-                    ref={textRef}
-                    className="relative p-6 font-mono text-sm text-transparent caret-green-500 outline-none"
-                    contentEditable
-                    onInput={handleInput}
-                    onPaste={handlePaste}
-                    suppressContentEditableWarning
-                    style={{ whiteSpace: "pre-wrap" }}
+                    className="p-6 font-mono text-sm whitespace-pre-wrap break-words"
                   />
                 </div>
               </Card>
@@ -322,22 +214,25 @@ export default function HomePage() {
               <ModelSelector
                 types={types}
                 models={models}
-                onModelSelect={(model) => updateConfig("model", model)}
+                selectedModel={
+                  models.find((m) => m.name === config.model) || models[0]
+                }
+                onModelSelect={(model) => updateConfig("model", model.name)}
               />
 
               <TemperatureSelector
-                defaultValue={config.temperature}
-                onValueChange={(value) => updateConfig("temperature", value)}
+                value={[config.temperature]}
+                onValueChange={(value) => updateConfig("temperature", value[0])}
               />
 
               <MaxLengthSelector
-                defaultValue={config.maxLength}
-                onValueChange={(value) => updateConfig("maxLength", value)}
+                value={[config.maxLength]}
+                onValueChange={(value) => updateConfig("maxLength", value[0])}
               />
 
               <TopPSelector
-                defaultValue={config.topP}
-                onValueChange={(value) => updateConfig("topP", value)}
+                value={[config.topP]}
+                onValueChange={(value) => updateConfig("topP", value[0])}
               />
 
               <Prompt
@@ -352,8 +247,8 @@ export default function HomePage() {
         <div className="bg-gray-900 px-4 py-1 border-t border-green-500">
           <div className="text-xs text-gray-500 font-mono">
             <p>
-              SYSTEM: READY | MODEL: {config.model?.name || "GPT-4O"} | TEMP:{" "}
-              {config.temperature[0]} | MAX LENGTH: {config.maxLength[0]}
+              SYSTEM: READY | MODEL: {config.model} | TEMP: {config.temperature}{" "}
+              | MAX LENGTH: {config.maxLength}
             </p>
           </div>
         </div>

@@ -25,13 +25,17 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-export function ModelSelector({ models, types, onModelSelect, ...props }) {
+export function ModelSelector({
+  models,
+  types,
+  selectedModel,
+  onModelSelect,
+  ...props
+}) {
   const [open, setOpen] = React.useState(false);
-  const [selectedModel, setSelectedModel] = React.useState(models[0]);
-  const [peekedModel, setPeekedModel] = React.useState(models[0]);
+  const [peekedModel, setPeekedModel] = React.useState(selectedModel);
 
   const handleSelect = (model) => {
-    setSelectedModel(model);
     setOpen(false);
     if (onModelSelect) {
       onModelSelect(model);
