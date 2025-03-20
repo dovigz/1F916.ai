@@ -1,24 +1,23 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
   Shield,
   Cpu,
   Database,
   Network,
-  TerminalIcon,
-  X,
-  Menu,
   MessageSquare,
   Hash,
   DollarSign,
   Pause,
   Skull,
-  Square,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import CodeViewer from "./code-viewer";
+
+// Add a constant for the session storage key
+const CONFIG_STORAGE_KEY = "ai_agent_config";
 
 export function TerminalSidebar() {
   const [systemStatus, setSystemStatus] = useState({
@@ -42,6 +41,39 @@ export function TerminalSidebar() {
   // Initialize with default config
   const initialCode = JSON.stringify(defaultConfig, null, 2);
   const [rawCode, setRawCode] = useState(initialCode);
+
+  // Load saved configuration from sessionStorage on initial render
+  useEffect(() => {
+    // Only run in the browser
+    if (typeof window !== "undefined") {
+      const savedConfig = sessionStorage.getItem(CONFIG_STORAGE_KEY);
+      if (savedConfig) {
+        try {
+          setRawCode(savedConfig);
+        } catch (error) {
+          console.error("Failed to load saved configuration:", error);
+        }
+      }
+    }
+  }, []);
+
+  // Save configuration to sessionStorage when rawCode changes
+  const handleCodeChange = (newCode) => {
+    setRawCode(newCode);
+    // We don't save to sessionStorage here - only when explicitly requested
+  };
+
+  // Save current configuration to sessionStorage
+  const saveConfiguration = () => {
+    try {
+      // Validate JSON before saving
+      JSON.parse(rawCode);
+      sessionStorage.setItem(CONFIG_STORAGE_KEY, rawCode);
+      alert("Configuration saved successfully!");
+    } catch (error) {
+      alert("Invalid JSON configuration. Please check your syntax.");
+    }
+  };
 
   // Get real system information where possible
   useEffect(() => {
@@ -114,7 +146,7 @@ export function TerminalSidebar() {
     console.log("Stop button clicked");
   };
 
-  let userId = sessionStorage.getItem("ai_agent_uid" || "CONNECTING...");
+  const userId = sessionStorage.getItem("ai_agent_uid") || "CONNECTING...";
 
   return (
     <>
@@ -245,12 +277,13 @@ export function TerminalSidebar() {
         </div>
         <div className="text-cyan-400 hover:text-cyan-300 px-2 py-2 mt-4 flex items-center space-x-2">
           <Cpu className="h-4 w-4" />
-          <span>{userId || "CONNECTING..."}</span>{" "}
+          <span>{userId}</span>{" "}
         </div>
         <CodeViewer
           rawCode={rawCode}
-          setRawCode={setRawCode}
+          setRawCode={handleCodeChange}
           initialCode={initialCode}
+          onSave={saveConfiguration}
         />
         <div className="text-xs text-green-500 font-mono px-2 py-2 mt-2">
           <div className="flex items-center">

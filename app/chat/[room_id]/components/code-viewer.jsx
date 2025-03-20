@@ -1,16 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { Separator } from "@/components/ui/separator";
-import { db } from "@/lib/firebase";
-import { ref, get, push, set } from "firebase/database";
-import { useRouter } from "next/navigation";
+import { RotateCcw, Clipboard, Save } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import DOMPurify from "dompurify";
 
 const syntaxHighlight = (json) => {
   const safeJson = DOMPurify.sanitize(json);
   return safeJson.replace(
-    /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+    /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
     (match) => {
       let cls = "text-foreground";
       if (/^"/.test(match)) {
@@ -27,18 +26,34 @@ const syntaxHighlight = (json) => {
   );
 };
 
-export default function CodeViewer({ rawCode, setRawCode, initialCode }) {
-  const router = useRouter();
+export default function CodeViewer({
+  rawCode,
+  setRawCode,
+  initialCode,
+  onSave,
+}) {
   const preRef = React.useRef(null);
   const textRef = React.useRef(null);
 
-  // Initialize editor content
+  // Initialize editor content with rawCode (from sessionStorage if available)
   React.useLayoutEffect(() => {
     if (textRef.current && preRef.current) {
-      textRef.current.textContent = initialCode;
-      preRef.current.innerHTML = syntaxHighlight(initialCode);
+      textRef.current.textContent = rawCode;
+      preRef.current.innerHTML = syntaxHighlight(rawCode);
     }
   }, []);
+
+  // Update the highlighted view when rawCode changes externally
+  React.useEffect(() => {
+    if (
+      textRef.current &&
+      preRef.current &&
+      textRef.current.textContent !== rawCode
+    ) {
+      textRef.current.textContent = rawCode;
+      preRef.current.innerHTML = syntaxHighlight(rawCode);
+    }
+  }, [rawCode]);
 
   const saveCursorPosition = () => {
     const sel = window.getSelection();
@@ -89,84 +104,79 @@ export default function CodeViewer({ rawCode, setRawCode, initialCode }) {
     });
   };
 
-  const handleSubmit = async () => {
-    let parsed;
-    try {
-      parsed = JSON.parse(rawCode);
-    } catch (e) {
-      alert("Invalid JSON configuration");
-      return;
-    }
-
-    setLoading(true);
-    let storedUserId = sessionStorage.getItem("ai_agent_uid");
-    if (!storedUserId) {
-      storedUserId = `agent_${Math.random().toString(36).slice(2, 11)}`;
-      sessionStorage.setItem("ai_agent_uid", storedUserId);
-    }
-
-    try {
-      const conversationsRef = ref(db, "conversations");
-      const snapshot = await get(conversationsRef);
-      let chatRoomId = null;
-
-      if (snapshot.exists()) {
-        snapshot.forEach((childSnapshot) => {
-          const data = childSnapshot.val();
-          if (data.isActive && Object.keys(data.agents).length === 1) {
-            chatRoomId = childSnapshot.key;
-          }
-        });
-      }
-
-      if (chatRoomId) {
-        await set(
-          ref(db, `conversations/${chatRoomId}/agents/${storedUserId}`),
-          true
-        );
-      } else {
-        const newChatRef = push(conversationsRef);
-        chatRoomId = newChatRef.key;
-        await set(newChatRef, {
-          createdBy: storedUserId,
-          isActive: true,
-          agents: { [storedUserId]: true },
-          viewers: 0,
-          messages: {},
-        });
-      }
-
-      router.push(`/chat/${chatRoomId}`);
-    } catch (error) {
-      console.error("Error handling conversation:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handlePaste = (e) => {
     e.preventDefault();
     const text = (e.clipboardData || window.clipboardData).getData("text");
     document.execCommand("insertText", false, DOMPurify.sanitize(text));
   };
 
+  const resetCode = () => {
+    setRawCode(initialCode);
+    if (textRef.current) {
+      textRef.current.textContent = initialCode;
+    }
+    if (preRef.current) {
+      preRef.current.innerHTML = syntaxHighlight(initialCode);
+    }
+  };
+
   return (
-    <div className="dark h-full flex-col md:flex">
-      <Separator />
-      <div className="relative rounded-md bg-background overflow-auto">
-        <pre
-          ref={preRef}
-          className="absolute m-0 p-6 font-mono text-sm pointer-events-none whitespace-pre-wrap break-words"
-        />
-        <div
-          ref={textRef}
-          className="relative p-6 font-mono text-sm text-transparent caret-foreground outline-none"
-          contentEditable
-          onInput={handleInput}
-          onPaste={handlePaste}
-          suppressContentEditableWarning
-          style={{ whiteSpace: "pre-wrap" }}
-        />
+    <div className="mt-4">
+      <div className="text-green-500 px-2 py-1 border-b border-green-500 mb-2">
+        AI AGENT CONFIG
+      </div>
+      <Card className="relative overflow-hidden rounded-md border border-green-500 bg-black">
+        <div className="flex justify-between items-center p-3 bg-gray-900 border-b border-green-500">
+          <h3 className="text-sm font-medium text-green-400 font-mono">
+            JSON CONFIGURATION
+          </h3>
+          <div className="flex space-x-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 px-2 text-green-500 hover:text-green-400 hover:bg-green-950"
+              onClick={() => navigator.clipboard.writeText(rawCode)}
+            >
+              <Clipboard className="h-4 w-4 mr-1" />
+              Copy
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 px-2 text-green-500 hover:text-green-400 hover:bg-green-950"
+              onClick={onSave}
+            >
+              <Save className="h-4 w-4 mr-1" />
+              Save
+            </Button>
+          </div>
+        </div>
+        <div className="relative rounded-md bg-black overflow-auto">
+          <pre
+            ref={preRef}
+            className="absolute m-0 p-6 font-mono text-sm pointer-events-none whitespace-pre-wrap break-words"
+          />
+          <div
+            ref={textRef}
+            className="relative p-6 font-mono text-sm text-transparent caret-green-500 outline-none"
+            contentEditable
+            onInput={handleInput}
+            onPaste={handlePaste}
+            suppressContentEditableWarning
+            style={{ whiteSpace: "pre-wrap" }}
+          />
+        </div>
+      </Card>
+      <div className="flex items-center space-x-2 mt-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 px-2 border-green-500 text-green-500 hover:bg-green-950 hover:text-green-400"
+          onClick={resetCode}
+        >
+          <RotateCcw className="h-3 w-3 mr-1" />
+          <span className="text-xs">RESET</span>
+        </Button>
       </div>
     </div>
   );
