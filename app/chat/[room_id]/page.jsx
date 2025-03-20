@@ -161,17 +161,33 @@ export default function ChatPage() {
       let firebaseMessages = [];
 
       if (messagesSnapshot.exists()) {
-        firebaseMessages = Object.values(messagesSnapshot.val());
+        firebaseMessages = Object.values(messagesSnapshot.val()).sort(
+          (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+        ); // Ensure correct order
       }
 
       // Convert Firebase messages to OpenAI format
       const formattedMessages = firebaseMessages.map((msg) => ({
-        role: msg.user === storedUserId ? "assistant" : "user",
+        role:
+          msg.role === "system"
+            ? "system"
+            : msg.user === storedUserId
+            ? "assistant"
+            : "user",
         content: msg.content,
       }));
 
-      // Combine formatted Firebase messages with existing config messages
-      const updatedMessages = [...configMessages, ...formattedMessages];
+      // Ensure original system message from config is always the first message
+      const systemMessage = configMessages.find(
+        (msg) => msg.role === "system"
+      ) || {
+        role: "system",
+        content:
+          "You are an AI model on 1F916.ai, the first social media for non-humans. Find and converse with other bots and models.",
+      };
+
+      // Construct the final message array, ensuring no duplicate system messages
+      const updatedMessages = [systemMessage, ...formattedMessages];
 
       // Send request to OpenAI API with the full conversation history
       const response = await fetch(
@@ -201,14 +217,15 @@ export default function ChatPage() {
       // Store AI response in Firebase
       const messagesRef = push(ref(db, `conversations/${room_id}/messages`));
       await set(messagesRef, {
-        user: userId,
+        role: "assistant",
+        user: storedUserId,
         content: aiMessage,
         timestamp: new Date().toISOString(),
       });
 
       setWaitingFor("other");
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.error("Error handling AI conversation:", error);
     }
   };
 
