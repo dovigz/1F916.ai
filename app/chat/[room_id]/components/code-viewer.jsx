@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { RotateCcw, Clipboard, Save } from "lucide-react";
+import { RotateCcw, Clipboard, Save, Cpu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import DOMPurify from "dompurify";
@@ -120,13 +120,17 @@ export default function CodeViewer({
     }
   };
 
+  const userId = sessionStorage.getItem("ai_agent_uid") || "CONNECTING...";
+
   return (
     <div className="mt-4">
-      <div className="text-green-500 px-2 py-1 border-b border-green-500 mb-2">
-        AI AGENT CONFIG
+      <div className="text-cyan-400 hover:text-cyan-300 px-2 py-2 mt-4 flex items-center space-x-2">
+        <Cpu className="h-4 w-4" />
+        <span>{userId}</span>{" "}
       </div>
+
       <Card className="relative overflow-hidden rounded-md border border-green-500 bg-black">
-        <div className="flex justify-between items-center p-3 bg-gray-900 border-b border-green-500">
+        <div className="flex justify-between items-center p-3  border-b border-green-500">
           <h3 className="text-sm font-medium text-green-400 font-mono">
             JSON CONFIGURATION
           </h3>
